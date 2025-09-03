@@ -1,4 +1,4 @@
-const API_URL = "https://farmacia-frontend-phi.vercel.app"; // tu endpoint en .NET
+const API_URL = "https://farmacia-269414280318.europe-west1.run.app"; // tu endpoint en .NET
 
 // ------------------ LOGIN -------------------
 const loginForm = document.getElementById("loginForm");
