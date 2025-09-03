@@ -43,12 +43,14 @@
         </thead>
         <tbody></tbody>
       </table>
+      <button onclick="mostrarFormularioMovimiento()">📦 Nuevo Movimiento</button>
     </section>
   </main>
 
   <!-- Modal para CRUD -->
   <div id="modal" class="modal hidden">
     <div class="modal-content">
+      <span class="close" onclick="cerrarModal()">&times;</span>
       <h3 id="modalTitle"></h3>
       <form id="crudForm"></form>
       <button onclick="cerrarModal()">Cancelar</button>
