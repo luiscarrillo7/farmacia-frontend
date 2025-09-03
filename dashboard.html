@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Farmacia - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>📦 Sistema de Farmacia</h1>
+    <button onclick="logout()">Salir</button>
+  </header>
+
+  <main>
+    <section>
+      <h2>Medicamentos</h2>
+      <table id="tablaMedicamentos">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Presentación</th>
+            <th>Categoria</th>
+            <th>Proveedor</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button onclick="mostrarFormularioMedicamento()">➕ Nuevo Medicamento</button>
+    </section>
+
+    <section>
+      <h2>Stock Actual</h2>
+      <table id="tablaStock">
+        <thead>
+          <tr>
+            <th>Medicamento</th>
+            <th>Lote</th>
+            <th>Ingreso</th>
+            <th>Vencimiento</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Modal para CRUD -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="modalTitle"></h3>
+      <form id="crudForm"></form>
+      <button onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
