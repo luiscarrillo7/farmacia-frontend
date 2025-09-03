@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema de Farmacia</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
+    tr:hover {
+      background: #f5f5f5;
+    }
+    .low-stock {
+      color: red;
+      font-weight: bold;
+    }
+    #search {
+      padding: 8px;
+      width: 250px;
+      margin-bottom: 15px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>💊 Sistema de Farmacia</h1>
+
+  <h2>📋 Medicamentos</h2>
+  <input type="text" id="search" placeholder="Buscar medicamento..." />
+
+  <table id="medicamentosTable">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Genérico</th>
+        <th>Presentación</th>
+        <th>Categoría</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>📦 Stock disponible</h2>
+  <table id="stockTable">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Presentación</th>
+        <th>Stock total</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const API_URL = "http://localhost:5000"; // 🔹 cámbialo a tu endpoint publicado
+
+    async function cargarDatos() {
+      try {
+        const [medsRes, stockRes] = await Promise.all([
+          fetch(`${API_URL}/medicamentos`),
+          fetch(`${API_URL}/stock`)
+        ]);
+
+        const medicamentos = await medsRes.json();
+        const stock = await stockRes.json();
+
+        mostrarMedicamentos(medicamentos);
+        mostrarStock(stock);
+      } catch (error) {
+        console.error("Error al cargar datos:", error);
+      }
+    }
+
+    function mostrarMedicamentos(medicamentos) {
+      const tbody = document.querySelector("#medicamentosTable tbody");
+      tbody.innerHTML = "";
+      medicamentos.forEach(m => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${m.nombre_comercial}</td>
+          <td>${m.nombre_generico}</td>
+          <td>${m.presentacion}</td>
+          <td>${m.categoria}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 🔎 Filtro en tiempo real
+      const searchInput = document.getElementById("search");
+      searchInput.addEventListener("keyup", () => {
+        const filtro = searchInput.value.toLowerCase();
+        const filas = tbody.querySelectorAll("tr");
+        filas.forEach(fila => {
+          const texto = fila.innerText.toLowerCase();
+          fila.style.display = texto.includes(filtro) ? "" : "none";
+        });
+      });
+    }
+
+    function mostrarStock(stock) {
+      const tbody = document.querySelector("#stockTable tbody");
+      tbody.innerHTML = "";
+      stock.forEach(s => {
+        const tr = document.createElement("tr");
+        const lowStockClass = s.stock_total < 20 ? "low-stock" : "";
+        tr.innerHTML = `
+          <td>${s.nombre_comercial}</td>
+          <td>${s.presentacion}</td>
+          <td class="${lowStockClass}">${s.stock_total}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    cargarDatos();
+  </script>
+</body>
+</html>
