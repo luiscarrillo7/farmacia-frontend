@@ -64,19 +64,16 @@ async function cargarStock() {
     const tbody = document.querySelector("#tablaStock tbody");
     tbody.innerHTML = "";
     
-    stock.forEach(s => {
-      const fechaVencimiento = new Date(s.fecha_vencimiento).toLocaleDateString();
-      const stockClass = s.stock_total <= 10 ? 'stock-bajo' : '';
-      
-      tbody.innerHTML += `
-        <tr class="${stockClass}">
-          <td>${s.nombre_comercial || 'N/A'}</td>
-          <td>${s.lote || 'N/A'}</td>
-          <td>-</td>
-          <td>${fechaVencimiento}</td>
-          <td>${s.stock_total}</td>
-        </tr>`;
-    });
+stock.forEach(mov => {
+  fila.innerHTML = `
+    <td>${mov.medicamentos?.nombre_comercial || 'N/A'}</td>
+    <td>${mov.lote || '-'}</td>
+    <td>${mov.creado_en ? new Date(mov.creado_en).toLocaleDateString() : '-'}</td>
+    <td>${mov.fecha_vencimiento || '-'}</td>
+    <td>${mov.cantidad ?? 0}</td>
+  `;
+});
+
   } catch (error) {
     console.error('Error:', error);
     mostrarError('Error al cargar stock');
