@@ -36,7 +36,6 @@ async function cargarMedicamentos() {
     tbody.innerHTML = "";
     
     meds.forEach(m => {
-      const fechaCreacion = new Date(m.fecha_creacion || '').toLocaleDateString();
       tbody.innerHTML += `
         <tr>
           <td>${m.nombre_comercial || 'N/A'}</td>
@@ -64,16 +63,20 @@ async function cargarStock() {
     const tbody = document.querySelector("#tablaStock tbody");
     tbody.innerHTML = "";
     
-stock.forEach(mov => {
-  fila.innerHTML = `
-    <td>${mov.medicamentos?.nombre_comercial || 'N/A'}</td>
-    <td>${mov.lote || '-'}</td>
-    <td>${mov.creado_en ? new Date(mov.creado_en).toLocaleDateString() : '-'}</td>
-    <td>${mov.fecha_vencimiento || '-'}</td>
-    <td>${mov.cantidad ?? 0}</td>
-  `;
-});
-
+    stock.forEach(s => {
+      const fechaVencimiento = s.fecha_vencimiento ? new Date(s.fecha_vencimiento).toLocaleDateString() : "-";
+      const fechaIngreso = s.creado_en ? new Date(s.creado_en).toLocaleDateString() : "-";
+      const stockClass = (s.cantidad ?? 0) <= 10 ? 'stock-bajo' : '';
+      
+      tbody.innerHTML += `
+        <tr class="${stockClass}">
+          <td>${s.medicamentos?.nombre_comercial || 'N/A'}</td>
+          <td>${s.lote || '-'}</td>
+          <td>${fechaIngreso}</td>
+          <td>${fechaVencimiento}</td>
+          <td>${s.cantidad ?? 0}</td>
+        </tr>`;
+    });
   } catch (error) {
     console.error('Error:', error);
     mostrarError('Error al cargar stock');
@@ -107,7 +110,6 @@ function mostrarFormularioMedicamento(id = null) {
     }
   };
 
-  // Si es edición, cargar datos existentes
   if (id) {
     cargarDatosMedicamento(id);
   }
@@ -245,7 +247,6 @@ function mostrarFormularioMovimiento() {
     <button type="submit">Registrar Movimiento</button>
   `;
 
-  // Cargar medicamentos en el select
   cargarMedicamentosSelect();
 
   crudForm.onsubmit = (e) => {
@@ -283,7 +284,7 @@ async function registrarMovimiento() {
       fecha_vencimiento: document.getElementById("fecha_vencimiento").value,
       motivo: document.getElementById("motivo").value,
       fecha_movimiento: new Date().toISOString(),
-      usuario_id: "user-temp" // Aquí podrías usar el ID del usuario logueado
+      usuario_id: "user-temp"
     };
 
     const res = await fetch(`${API_URL}/movimientos`, {
@@ -312,12 +313,10 @@ function cerrarModal() {
 }
 
 function mostrarError(mensaje) {
-  // Puedes implementar un sistema de notificaciones más sofisticado
   alert(`❌ ${mensaje}`);
 }
 
 function mostrarExito(mensaje) {
-  // Puedes implementar un sistema de notificaciones más sofisticado
   alert(`✅ ${mensaje}`);
 }
 
@@ -341,14 +340,12 @@ if (document.querySelector("#tablaMedicamentos")) {
   cargarMedicamentos();
   cargarStock();
   
-  // Mostrar nombre del usuario
   const userName = localStorage.getItem("userName");
   if (userName) {
     document.querySelector("h1").textContent += ` - Bienvenido ${userName}`;
   }
 }
 
-// Cerrar modal al hacer clic fuera de él
 document.addEventListener('click', (e) => {
   const modal = document.getElementById("modal");
   if (e.target === modal) {
