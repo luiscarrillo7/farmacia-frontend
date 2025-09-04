@@ -29,19 +29,19 @@ if (loginForm) {
 async function cargarMedicamentos() {
   try {
     const res = await fetch(`${API_URL}/medicamentos`);
-    if (!res.ok) throw new Error("Error al cargar medicamentos");
-
+    if (!res.ok) throw new Error('Error al cargar medicamentos');
+    
     const meds = await res.json();
     const tbody = document.querySelector("#tablaMedicamentos tbody");
     tbody.innerHTML = "";
-
-    meds.forEach((m) => {
+    
+    meds.forEach(m => {
       tbody.innerHTML += `
         <tr>
-          <td>${m.nombre_comercial || "N/A"}</td>
-          <td>${m.presentacion || "N/A"}</td>
-          <td>${m.categoria || "N/A"}</td>
-          <td>${m.proveedor_id || "N/A"}</td>
+          <td>${m.nombre_comercial || 'N/A'}</td>
+          <td>${m.presentacion || 'N/A'}</td>
+          <td>${m.categoria || 'N/A'}</td>
+          <td>${m.proveedor_id || 'N/A'}</td>
           <td>
             <button onclick="editarMedicamento('${m.id}')">✏️</button>
             <button onclick="eliminarMedicamento('${m.id}')">🗑️</button>
@@ -49,8 +49,8 @@ async function cargarMedicamentos() {
         </tr>`;
     });
   } catch (error) {
-    console.error("Error:", error);
-    mostrarError("Error al cargar medicamentos");
+    console.error('Error:', error);
+    mostrarError('Error al cargar medicamentos');
   }
 }
 
@@ -58,31 +58,28 @@ async function cargarStock() {
   try {
     const res = await fetch(`${API_URL}/stock`);
     if (!res.ok) throw new Error('Error al cargar stock');
-
+    
     const stock = await res.json();
     const tbody = document.querySelector("#tablaStock tbody");
     tbody.innerHTML = "";
-
+    
     stock.forEach(s => {
-      const nombre = s.medicamentos?.nombre_comercial || "N/A";
-      const lote = s.lote || "-";
-      const fechaIngreso = s.creado_en ? new Date(s.creado_en).toLocaleDateString() : "-";
       const fechaVencimiento = s.fecha_vencimiento ? new Date(s.fecha_vencimiento).toLocaleDateString() : "-";
-      const cantidad = s.cantidad ?? 0;
-      const stockClass = cantidad <= 10 ? "stock-bajo" : "";
-
+      const fechaIngreso = s.creado_en ? new Date(s.creado_en).toLocaleDateString() : "-";
+      const stockClass = (s.cantidad ?? 0) <= 10 ? 'stock-bajo' : '';
+      
       tbody.innerHTML += `
         <tr class="${stockClass}">
-          <td>${nombre}</td>
-          <td>${lote}</td>
+          <td>${s.medicamentos?.nombre_comercial || 'N/A'}</td>
+          <td>${s.lote || '-'}</td>
           <td>${fechaIngreso}</td>
           <td>${fechaVencimiento}</td>
-          <td>${cantidad}</td>
+          <td>${s.cantidad ?? 0}</td>
         </tr>`;
     });
   } catch (error) {
-    console.error("Error:", error);
-    mostrarError("Error al cargar stock");
+    console.error('Error:', error);
+    mostrarError('Error al cargar stock');
   }
 }
 
@@ -93,7 +90,7 @@ function mostrarFormularioMedicamento(id = null) {
   const crudForm = document.getElementById("crudForm");
 
   modalTitle.textContent = id ? "Editar Medicamento" : "Nuevo Medicamento";
-
+  
   crudForm.innerHTML = `
     <input type="text" id="nombre_comercial" placeholder="Nombre Comercial" required>
     <input type="text" id="nombre_generico" placeholder="Nombre Genérico">
@@ -101,7 +98,7 @@ function mostrarFormularioMedicamento(id = null) {
     <input type="text" id="categoria" placeholder="Categoría">
     <input type="text" id="laboratorio" placeholder="Laboratorio">
     <textarea id="descripcion" placeholder="Descripción"></textarea>
-    <button type="submit">${id ? "Actualizar" : "Crear"}</button>
+    <button type="submit">${id ? 'Actualizar' : 'Crear'}</button>
   `;
 
   crudForm.onsubmit = (e) => {
@@ -113,7 +110,9 @@ function mostrarFormularioMedicamento(id = null) {
     }
   };
 
-  if (id) cargarDatosMedicamento(id);
+  if (id) {
+    cargarDatosMedicamento(id);
+  }
 
   modal.classList.remove("hidden");
 }
@@ -122,19 +121,19 @@ async function cargarDatosMedicamento(id) {
   try {
     const res = await fetch(`${API_URL}/medicamentos`);
     const medicamentos = await res.json();
-    const med = medicamentos.find((m) => m.id === id);
-
+    const med = medicamentos.find(m => m.id === id);
+    
     if (med) {
-      document.getElementById("nombre_comercial").value = med.nombre_comercial || "";
-      document.getElementById("nombre_generico").value = med.nombre_generico || "";
-      document.getElementById("presentacion").value = med.presentacion || "";
-      document.getElementById("categoria").value = med.categoria || "";
-      document.getElementById("laboratorio").value = med.laboratorio || "";
-      document.getElementById("descripcion").value = med.descripcion || "";
+      document.getElementById("nombre_comercial").value = med.nombre_comercial || '';
+      document.getElementById("nombre_generico").value = med.nombre_generico || '';
+      document.getElementById("presentacion").value = med.presentacion || '';
+      document.getElementById("categoria").value = med.categoria || '';
+      document.getElementById("laboratorio").value = med.laboratorio || '';
+      document.getElementById("descripcion").value = med.descripcion || '';
     }
   } catch (error) {
-    console.error("Error al cargar medicamento:", error);
-    mostrarError("Error al cargar datos del medicamento");
+    console.error('Error al cargar medicamento:', error);
+    mostrarError('Error al cargar datos del medicamento');
   }
 }
 
@@ -151,19 +150,21 @@ async function crearMedicamento() {
     };
 
     const res = await fetch(`${API_URL}/medicamentos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(medicamento)
     });
 
     if (res.ok) {
       cerrarModal();
       cargarMedicamentos();
-      mostrarExito("Medicamento creado exitosamente");
-    } else throw new Error("Error al crear medicamento");
+      mostrarExito('Medicamento creado exitosamente');
+    } else {
+      throw new Error('Error al crear medicamento');
+    }
   } catch (error) {
-    console.error("Error:", error);
-    mostrarError("Error al crear medicamento");
+    console.error('Error:', error);
+    mostrarError('Error al crear medicamento');
   }
 }
 
@@ -179,19 +180,21 @@ async function actualizarMedicamento(id) {
     };
 
     const res = await fetch(`${API_URL}/medicamentos/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(medicamento)
     });
 
     if (res.ok) {
       cerrarModal();
       cargarMedicamentos();
-      mostrarExito("Medicamento actualizado exitosamente");
-    } else throw new Error("Error al actualizar medicamento");
+      mostrarExito('Medicamento actualizado exitosamente');
+    } else {
+      throw new Error('Error al actualizar medicamento');
+    }
   } catch (error) {
-    console.error("Error:", error);
-    mostrarError("Error al actualizar medicamento");
+    console.error('Error:', error);
+    mostrarError('Error al actualizar medicamento');
   }
 }
 
@@ -200,18 +203,24 @@ function editarMedicamento(id) {
 }
 
 async function eliminarMedicamento(id) {
-  if (!confirm("¿Estás seguro de que quieres eliminar este medicamento?")) return;
+  if (!confirm('¿Estás seguro de que quieres eliminar este medicamento?')) {
+    return;
+  }
 
   try {
-    const res = await fetch(`${API_URL}/medicamentos/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API_URL}/medicamentos/${id}`, {
+      method: 'DELETE'
+    });
 
     if (res.ok) {
       cargarMedicamentos();
-      mostrarExito("Medicamento eliminado exitosamente");
-    } else throw new Error("Error al eliminar medicamento");
+      mostrarExito('Medicamento eliminado exitosamente');
+    } else {
+      throw new Error('Error al eliminar medicamento');
+    }
   } catch (error) {
-    console.error("Error:", error);
-    mostrarError("Error al eliminar medicamento");
+    console.error('Error:', error);
+    mostrarError('Error al eliminar medicamento');
   }
 }
 
@@ -222,7 +231,7 @@ function mostrarFormularioMovimiento() {
   const crudForm = document.getElementById("crudForm");
 
   modalTitle.textContent = "Registrar Movimiento de Stock";
-
+  
   crudForm.innerHTML = `
     <select id="medicamento_id" required>
       <option value="">Seleccionar Medicamento</option>
@@ -253,15 +262,15 @@ async function cargarMedicamentosSelect() {
     const res = await fetch(`${API_URL}/medicamentos`);
     const medicamentos = await res.json();
     const select = document.getElementById("medicamento_id");
-
-    medicamentos.forEach((med) => {
+    
+    medicamentos.forEach(med => {
       const option = document.createElement("option");
       option.value = med.id;
       option.textContent = `${med.nombre_comercial} - ${med.presentacion}`;
       select.appendChild(option);
     });
   } catch (error) {
-    console.error("Error al cargar medicamentos:", error);
+    console.error('Error al cargar medicamentos:', error);
   }
 }
 
@@ -279,144 +288,21 @@ async function registrarMovimiento() {
     };
 
     const res = await fetch(`${API_URL}/movimientos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(movimiento)
     });
 
     if (res.ok) {
       cerrarModal();
       cargarStock();
-      mostrarExito("Movimiento registrado exitosamente");
-    } else throw new Error("Error al registrar movimiento");
+      mostrarExito('Movimiento registrado exitosamente');
+    } else {
+      throw new Error('Error al registrar movimiento');
+    }
   } catch (error) {
-    console.error("Error:", error);
-    mostrarError("Error al registrar movimiento");
-  }
-}
-
-// ------------------ VENTAS -------------------
-async function cargarVentas() {
-  try {
-    const res = await fetch(`${API_URL}/ventas`);
-    if (!res.ok) throw new Error("Error al cargar ventas");
-
-    const ventas = await res.json();
-    const tbody = document.querySelector("#tablaVentas tbody");
-    tbody.innerHTML = "";
-
-    ventas.forEach((v) => {
-      const fecha = new Date(v.fecha).toLocaleString();
-      tbody.innerHTML += `
-        <tr>
-          <td>${v.id}</td>
-          <td>${v.cliente_nombre || "N/A"}</td>
-          <td>${v.usuario_id || "N/A"}</td>
-          <td>S/ ${v.total.toFixed(2)}</td>
-          <td>${fecha}</td>
-        </tr>`;
-    });
-  } catch (error) {
-    console.error("Error:", error);
-    mostrarError("Error al cargar ventas");
-  }
-}
-
-function mostrarFormularioVenta() {
-  const modal = document.getElementById("modal");
-  const modalTitle = document.getElementById("modalTitle");
-  const crudForm = document.getElementById("crudForm");
-
-  modalTitle.textContent = "Registrar Nueva Venta";
-
-  crudForm.innerHTML = `
-    <input type="text" id="cliente_nombre" placeholder="Nombre Cliente" required>
-    <div id="detalleVenta"></div>
-    <button type="button" onclick="agregarDetalleVenta()">➕ Agregar Medicamento</button>
-    <button type="submit">Registrar Venta</button>
-  `;
-
-  crudForm.onsubmit = (e) => {
-    e.preventDefault();
-    registrarVenta();
-  };
-
-  modal.classList.remove("hidden");
-}
-
-function agregarDetalleVenta() {
-  const detalleDiv = document.getElementById("detalleVenta");
-  const detalleHTML = `
-    <div class="detalle-item">
-      <select class="medicamentoSelect" required></select>
-      <input type="number" class="cantidadDetalle" placeholder="Cantidad" min="1" required>
-      <input type="number" class="precioDetalle" placeholder="Precio" min="0" step="0.01" required>
-      <button type="button" onclick="this.parentElement.remove()">❌</button>
-    </div>
-  `;
-  detalleDiv.insertAdjacentHTML("beforeend", detalleHTML);
-
-  cargarMedicamentosSelectVenta();
-}
-
-async function cargarMedicamentosSelectVenta() {
-  try {
-    const res = await fetch(`${API_URL}/medicamentos`);
-    const medicamentos = await res.json();
-    const selects = document.querySelectorAll(".medicamentoSelect");
-
-    selects.forEach((select) => {
-      if (select.options.length <= 1) {
-        select.innerHTML = `<option value="">Seleccionar Medicamento</option>`;
-        medicamentos.forEach((med) => {
-          const option = document.createElement("option");
-          option.value = med.id;
-          option.textContent = `${med.nombre_comercial} - ${med.presentacion}`;
-          select.appendChild(option);
-        });
-      }
-    });
-  } catch (error) {
-    console.error("Error al cargar medicamentos:", error);
-  }
-}
-
-async function registrarVenta() {
-  try {
-    const cliente_nombre = document.getElementById("cliente_nombre").value;
-
-    const detalles = [];
-    document.querySelectorAll(".detalle-item").forEach((item) => {
-      detalles.push({
-        medicamento_id: item.querySelector(".medicamentoSelect").value,
-        cantidad: parseInt(item.querySelector(".cantidadDetalle").value),
-        precio: parseFloat(item.querySelector(".precioDetalle").value)
-      });
-    });
-
-    const total = detalles.reduce((sum, d) => sum + d.cantidad * d.precio, 0);
-
-    const venta = {
-      cliente_nombre,
-      usuario_id: localStorage.getItem("userName") || "usuario-temp",
-      total,
-      detalles
-    };
-
-    const res = await fetch(`${API_URL}/ventas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(venta)
-    });
-
-    if (res.ok) {
-      cerrarModal();
-      cargarVentas();
-      mostrarExito("Venta registrada exitosamente");
-    } else throw new Error("Error al registrar venta");
-  } catch (error) {
-    console.error("Error:", error);
-    mostrarError("Error al registrar venta");
+    console.error('Error:', error);
+    mostrarError('Error al registrar movimiento');
   }
 }
 
@@ -440,6 +326,7 @@ function logout() {
   window.location.href = "index.html";
 }
 
+// ------------------ VERIFICACIÓN DE AUTENTICACIÓN -------------------
 function verificarAutenticacion() {
   const token = localStorage.getItem("token");
   if (!token && !window.location.pathname.includes("index.html")) {
@@ -452,15 +339,16 @@ if (document.querySelector("#tablaMedicamentos")) {
   verificarAutenticacion();
   cargarMedicamentos();
   cargarStock();
-  cargarVentas();
-
+  
   const userName = localStorage.getItem("userName");
   if (userName) {
     document.querySelector("h1").textContent += ` - Bienvenido ${userName}`;
   }
 }
 
-document.addEventListener("click", (e) => {
+document.addEventListener('click', (e) => {
   const modal = document.getElementById("modal");
-  if (e.target === modal) cerrarModal();
+  if (e.target === modal) {
+    cerrarModal();
+  }
 });
