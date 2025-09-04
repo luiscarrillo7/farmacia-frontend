@@ -1,21 +1,930 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Farmacia - Login</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Farmacia</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --text: #2c3e50;
+            --bg-light: #f8f9fa;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-light);
+            color: var(--text);
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary);
+            color: white;
+            padding: 20px 0;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+        }
+        
+        .sidebar-menu li {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu li:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-menu li.active {
+            background-color: var(--secondary);
+            border-left: 4px solid white;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table th {
+            background-color: var(--light);
+            font-weight: 600;
+        }
+        
+        table tr:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--light);
+        }
+        
+        .login-form {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 400px;
+            max-width: 90%;
+        }
+        
+        .alert {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .badge-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .badge-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: #777;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Ingreso al Sistema</h2>
-    <form id="loginForm">
-      <input type="text" id="dni" placeholder="DNI" required>
-      <input type="password" id="password" placeholder="Contraseña" required>
-      <button type="submit">Ingresar</button>
-    </form>
-    <p id="errorMsg" class="error"></p>
-  </div>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-container">
+        <div class="login-form">
+            <h2 style="text-align: center; margin-bottom: 20px;">Sistema de Farmacia</h2>
+            <div id="login-alert" class="alert" style="display: none;"></div>
+            <div class="form-group">
+                <label for="dni">DNI</label>
+                <input type="text" id="dni" class="form-control" placeholder="Ingrese su DNI">
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" class="form-control" placeholder="Ingrese su contraseña">
+            </div>
+            <button id="btn-login" class="btn btn-primary" style="width: 100%;">Iniciar Sesión</button>
+        </div>
+    </div>
+    
+    <!-- Main Application -->
+    <div id="app" class="container" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Sistema Farmacia</h2>
+                <p id="user-info">Usuario: <span id="user-name"></span></p>
+            </div>
+            <ul class="sidebar-menu">
+                <li data-section="dashboard" class="active">Dashboard</li>
+                <li data-section="medicamentos">Medicamentos</li>
+                <li data-section="stock">Stock</li>
+                <li data-section="clientes">Clientes</li>
+                <li data-section="proveedores">Proveedores</li>
+                <li data-section="ventas">Ventas</li>
+                <li data-section="movimientos">Movimientos</li>
+                <li data-section="reportes">Reportes</li>
+                <li id="btn-logout">Cerrar Sesión</li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 id="section-title">Dashboard</h1>
+                <div id="header-actions"></div>
+            </div>
+            
+            <div id="content">
+                <!-- Content will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for forms -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Formulario</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div id="modal-body">
+                <!-- Modal content will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
 
-  <script src="script.js"></script>
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:8080'; // Change this to your API URL
+        
+        // Global State
+        let currentUser = null;
+        let authToken = localStorage.getItem('authToken');
+        
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const app = document.getElementById('app');
+        const content = document.getElementById('content');
+        const sectionTitle = document.getElementById('section-title');
+        const headerActions = document.getElementById('header-actions');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const closeModal = document.querySelector('.close');
+        
+        // Check if user is already logged in
+        if (authToken) {
+            // Verify token is still valid
+            checkAuth();
+        }
+        
+        // Event Listeners
+        document.getElementById('btn-login').addEventListener('click', login);
+        document.getElementById('btn-logout').addEventListener('click', logout);
+        
+        // Sidebar navigation
+        document.querySelectorAll('.sidebar-menu li').forEach(item => {
+            if (item.id !== 'btn-logout') {
+                item.addEventListener('click', () => {
+                    // Update active menu item
+                    document.querySelectorAll('.sidebar-menu li').forEach(li => {
+                        li.classList.remove('active');
+                    });
+                    item.classList.add('active');
+                    
+                    // Load section
+                    loadSection(item.dataset.section);
+                });
+            }
+        });
+        
+        // Close modal
+        closeModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        // API Functions
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            };
+            
+            const config = { ...defaultOptions, ...options };
+            
+            try {
+                const response = await fetch(url, config);
+                
+                if (response.status === 401) {
+                    // Unauthorized, logout user
+                    logout();
+                    return null;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API request failed:', error);
+                showAlert('Error en la conexión con el servidor', 'danger');
+                return null;
+            }
+        }
+        
+        // Auth Functions
+        async function login() {
+            const dni = document.getElementById('dni').value;
+            const password = document.getElementById('password').value;
+            
+            if (!dni || !password) {
+                showLoginAlert('Por favor ingrese DNI y contraseña', 'danger');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ dni, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    currentUser = {
+                        nombre: data.nombre,
+                        apellido: data.apellido,
+                        rol: data.rol,
+                        id: data.id
+                    };
+                    
+                    // Update UI
+                    document.getElementById('user-name').textContent = `${data.nombre} ${data.apellido}`;
+                    loginScreen.style.display = 'none';
+                    app.style.display = 'flex';
+                    
+                    // Load dashboard
+                    loadSection('dashboard');
+                } else {
+                    showLoginAlert(data.detail || 'Error en el login', 'danger');
+                }
+            } catch (error) {
+                console.error('Login failed:', error);
+                showLoginAlert('Error de conexión', 'danger');
+            }
+        }
+        
+        async function checkAuth() {
+            const data = await apiRequest('/health');
+            
+            if (data) {
+                // Token is valid
+                const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+                if (userInfo) {
+                    currentUser = userInfo;
+                    document.getElementById('user-name').textContent = `${userInfo.nombre} ${userInfo.apellido}`;
+                    loginScreen.style.display = 'none';
+                    app.style.display = 'flex';
+                    
+                    // Load dashboard
+                    loadSection('dashboard');
+                } else {
+                    // Need to get user info
+                    await getUserInfo();
+                }
+            } else {
+                // Token is invalid
+                localStorage.removeItem('authToken');
+                authToken = null;
+            }
+        }
+        
+        async function getUserInfo() {
+            // This would need an endpoint to get user info by ID
+            // For now, we'll assume the login response stored the necessary info
+        }
+        
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userInfo');
+            app.style.display = 'none';
+            loginScreen.style.display = 'flex';
+            
+            // Clear login form
+            document.getElementById('dni').value = '';
+            document.getElementById('password').value = '';
+        }
+        
+        // UI Functions
+        function showLoginAlert(message, type) {
+            const alert = document.getElementById('login-alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showAlert(message, type, container = content) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            container.insertBefore(alert, container.firstChild);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+        
+        function loadSection(section) {
+            sectionTitle.textContent = section.charAt(0).toUpperCase() + section.slice(1);
+            headerActions.innerHTML = '';
+            
+            switch(section) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'medicamentos':
+                    loadMedicamentos();
+                    break;
+                case 'stock':
+                    loadStock();
+                    break;
+                case 'clientes':
+                    loadClientes();
+                    break;
+                case 'proveedores':
+                    loadProveedores();
+                    break;
+                case 'ventas':
+                    loadVentas();
+                    break;
+                case 'movimientos':
+                    loadMovimientos();
+                    break;
+                case 'reportes':
+                    loadReportes();
+                    break;
+            }
+        }
+        
+        // Section Loaders
+        async function loadDashboard() {
+            content.innerHTML = '<p>Cargando dashboard...</p>';
+            
+            // Get stats for dashboard
+            const [stockData, ventasData, medicamentosData] = await Promise.all([
+                apiRequest('/stock?limit=5'),
+                apiRequest('/ventas?limit=5'),
+                apiRequest('/medicamentos?limit=5')
+            ]);
+            
+            if (!stockData || !ventasData || !medicamentosData) {
+                content.innerHTML = '<p>Error cargando datos del dashboard</p>';
+                return;
+            }
+            
+            // Get low stock alert
+            const lowStock = await apiRequest('/reportes/stock-bajo?minimo=10');
+            
+            let html = `
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Medicamentos</div>
+                        <div class="stat-value">${medicamentosData.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Items en Stock</div>
+                        <div class="stat-value">${stockData.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Ventas Hoy</div>
+                        <div class="stat-value">${ventasData.length}</div>
+                    </div>
+                </div>
+            `;
+            
+            if (lowStock && lowStock.length > 0) {
+                html += `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Stock Bajo</h3>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Medicamento</th>
+                                    <th>Stock Actual</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                lowStock.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item.medicamentos.nombre_comercial}</td>
+                            <td><span class="badge badge-danger">${item.cantidad}</span></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="addStock('${item.id}')">Agregar Stock</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Últimas Ventas</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            ventasData.forEach(venta => {
+                html += `
+                    <tr>
+                        <td>${new Date(venta.fecha).toLocaleDateString()}</td>
+                        <td>${venta.cliente_id ? venta.clientes.nombre : 'Cliente ocasional'}</td>
+                        <td>$${venta.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+        
+        async function loadMedicamentos() {
+            content.innerHTML = '<p>Cargando medicamentos...</p>';
+            
+            // Add button to create new medicamento
+            headerActions.innerHTML = `
+                <button class="btn btn-primary" onclick="showMedicamentoForm()">Nuevo Medicamento</button>
+            `;
+            
+            const medicamentos = await apiRequest('/medicamentos');
+            
+            if (!medicamentos) {
+                content.innerHTML = '<p>Error cargando medicamentos</p>';
+                return;
+            }
+            
+            let html = `
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Medicamentos</h3>
+                        <input type="text" id="search-medicamentos" class="form-control" placeholder="Buscar..." style="width: 300px;">
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre Comercial</th>
+                                <th>Nombre Genérico</th>
+                                <th>Categoría</th>
+                                <th>Presentación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            medicamentos.forEach(med => {
+                html += `
+                    <tr>
+                        <td>${med.nombre_comercial}</td>
+                        <td>${med.nombre_generico}</td>
+                        <td>${med.categoria}</td>
+                        <td>${med.presentacion}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="editMedicamento('${med.id}')">Editar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+            
+            // Add search functionality
+            document.getElementById('search-medicamentos').addEventListener('input', async (e) => {
+                const searchTerm = e.target.value;
+                const filteredMedicamentos = await apiRequest(`/medicamentos?search=${encodeURIComponent(searchTerm)}`);
+                
+                if (filteredMedicamentos) {
+                    const tbody = document.querySelector('table tbody');
+                    tbody.innerHTML = '';
+                    
+                    filteredMedicamentos.forEach(med => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${med.nombre_comercial}</td>
+                                <td>${med.nombre_generico}</td>
+                                <td>${med.categoria}</td>
+                                <td>${med.presentacion}</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm" onclick="editMedicamento('${med.id}')">Editar</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+        }
+        
+        async function showMedicamentoForm(medicamentoId = null) {
+            let medicamento = null;
+            let title = 'Nuevo Medicamento';
+            
+            if (medicamentoId) {
+                title = 'Editar Medicamento';
+                const medicamentos = await apiRequest(`/medicamentos?id=eq.${medicamentoId}`);
+                if (medicamentos && medicamentos.length > 0) {
+                    medicamento = medicamentos[0];
+                }
+            }
+            
+            modalTitle.textContent = title;
+            
+            modalBody.innerHTML = `
+                <form id="medicamento-form">
+                    <div class="form-group">
+                        <label for="nombre_comercial">Nombre Comercial</label>
+                        <input type="text" id="nombre_comercial" class="form-control" value="${medicamento ? medicamento.nombre_comercial : ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombre_generico">Nombre Genérico</label>
+                        <input type="text" id="nombre_generico" class="form-control" value="${medicamento ? medicamento.nombre_generico : ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="categoria">Categoría</label>
+                        <input type="text" id="categoria" class="form-control" value="${medicamento ? medicamento.categoria : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="presentacion">Presentación</label>
+                        <input type="text" id="presentacion" class="form-control" value="${medicamento ? medicamento.presentacion : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="laboratorio">Laboratorio</label>
+                        <input type="text" id="laboratorio" class="form-control" value="${medicamento ? medicamento.laboratorio : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="precio_venta">Precio Venta</label>
+                        <input type="number" step="0.01" id="precio_venta" class="form-control" value="${medicamento ? medicamento.precio_venta : ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            `;
+            
+            modal.style.display = 'flex';
+            
+            document.getElementById('medicamento-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const formData = {
+                    nombre_comercial: document.getElementById('nombre_comercial').value,
+                    nombre_generico: document.getElementById('nombre_generico').value,
+                    categoria: document.getElementById('categoria').value,
+                    presentacion: document.getElementById('presentacion').value,
+                    laboratorio: document.getElementById('laboratorio').value,
+                    precio_venta: parseFloat(document.getElementById('precio_venta').value)
+                };
+                
+                let result;
+                
+                if (medicamentoId) {
+                    result = await apiRequest(`/medicamentos/${medicamentoId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    result = await apiRequest('/medicamentos', {
+                        method: 'POST',
+                        body: JSON.stringify(formData)
+                    });
+                }
+                
+                if (result) {
+                    modal.style.display = 'none';
+                    showAlert(`Medicamento ${medicamentoId ? 'actualizado' : 'creado'} correctamente`, 'success');
+                    loadMedicamentos();
+                } else {
+                    showAlert('Error al guardar el medicamento', 'danger', modalBody);
+                }
+            });
+        }
+        
+        async function editMedicamento(id) {
+            await showMedicamentoForm(id);
+        }
+        
+        // Other section loaders would follow the same pattern
+        
+        async function loadStock() {
+            // Implementation for stock management
+            content.innerHTML = '<p>Cargando stock...</p>';
+        }
+        
+        async function loadClientes() {
+            // Implementation for client management
+            content.innerHTML = '<p>Cargando clientes...</p>';
+        }
+        
+        async function loadProveedores() {
+            // Implementation for supplier management
+            content.innerHTML = '<p>Cargando proveedores...</p>';
+        }
+        
+        async function loadVentas() {
+            // Implementation for sales management
+            content.innerHTML = '<p>Cargando ventas...</p>';
+        }
+        
+        async function loadMovimientos() {
+            // Implementation for inventory movements
+            content.innerHTML = '<p>Cargando movimientos...</p>';
+        }
+        
+        async function loadReportes() {
+            // Implementation for reports
+            content.innerHTML = '<p>Cargando reportes...</p>';
+        }
+        
+        // Initialize the application
+        if (authToken) {
+            checkAuth();
+        }
+    </script>
 </body>
 </html>
