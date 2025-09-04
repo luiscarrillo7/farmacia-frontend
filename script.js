@@ -57,23 +57,27 @@ async function cargarMedicamentos() {
 async function cargarStock() {
   try {
     const res = await fetch(`${API_URL}/stock`);
-    if (!res.ok) throw new Error("Error al cargar stock");
+    if (!res.ok) throw new Error('Error al cargar stock');
 
     const stock = await res.json();
     const tbody = document.querySelector("#tablaStock tbody");
     tbody.innerHTML = "";
 
-    stock.forEach((s) => {
-      const fechaVencimiento = new Date(s.fecha_vencimiento).toLocaleDateString();
-      const stockClass = s.stock_total <= 10 ? "stock-bajo" : "";
+    stock.forEach(s => {
+      const nombre = s.medicamentos?.nombre_comercial || "N/A";
+      const lote = s.lote || "-";
+      const fechaIngreso = s.creado_en ? new Date(s.creado_en).toLocaleDateString() : "-";
+      const fechaVencimiento = s.fecha_vencimiento ? new Date(s.fecha_vencimiento).toLocaleDateString() : "-";
+      const cantidad = s.cantidad ?? 0;
+      const stockClass = cantidad <= 10 ? "stock-bajo" : "";
 
       tbody.innerHTML += `
         <tr class="${stockClass}">
-          <td>${s.nombre_comercial || "N/A"}</td>
-          <td>${s.lote || "N/A"}</td>
-          <td>-</td>
+          <td>${nombre}</td>
+          <td>${lote}</td>
+          <td>${fechaIngreso}</td>
           <td>${fechaVencimiento}</td>
-          <td>${s.stock_total}</td>
+          <td>${cantidad}</td>
         </tr>`;
     });
   } catch (error) {
