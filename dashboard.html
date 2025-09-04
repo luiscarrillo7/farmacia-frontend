@@ -12,6 +12,7 @@
   </header>
 
   <main>
+    <!-- ================== MEDICAMENTOS ================== -->
     <section>
       <h2>Medicamentos</h2>
       <table id="tablaMedicamentos">
@@ -19,7 +20,7 @@
           <tr>
             <th>Nombre</th>
             <th>Presentación</th>
-            <th>Categoria</th>
+            <th>Categoría</th>
             <th>Proveedor</th>
             <th>Acciones</th>
           </tr>
@@ -29,6 +30,7 @@
       <button onclick="mostrarFormularioMedicamento()">➕ Nuevo Medicamento</button>
     </section>
 
+    <!-- ================== STOCK ================== -->
     <section>
       <h2>Stock Actual</h2>
       <table id="tablaStock">
@@ -45,9 +47,27 @@
       </table>
       <button onclick="mostrarFormularioMovimiento()">📦 Nuevo Movimiento</button>
     </section>
+
+    <!-- ================== VENTAS ================== -->
+    <section>
+      <h2>Ventas</h2>
+      <table id="tablaVentas">
+        <thead>
+          <tr>
+            <th>ID Venta</th>
+            <th>Cliente</th>
+            <th>Usuario</th>
+            <th>Total</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button onclick="mostrarFormularioVenta()">🛒 Nueva Venta</button>
+    </section>
   </main>
 
-  <!-- Modal para CRUD -->
+  <!-- ================== MODAL REUTILIZABLE ================== -->
   <div id="modal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="cerrarModal()">&times;</span>
