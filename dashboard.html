@@ -6,77 +6,152 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <h1>📦 Sistema de Farmacia</h1>
-    <button onclick="logout()">Salir</button>
-  </header>
+  <h1>📊 Panel de Farmacia</h1>
+  <button onclick="logout()">🚪 Cerrar sesión</button>
 
-  <main>
-    <!-- ================== MEDICAMENTOS ================== -->
-    <section>
-      <h2>Medicamentos</h2>
-      <table id="tablaMedicamentos">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Presentación</th>
-            <th>Categoría</th>
-            <th>Proveedor</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <button onclick="mostrarFormularioMedicamento()">➕ Nuevo Medicamento</button>
-    </section>
+  <!-- Sección de Medicamentos -->
+  <section>
+    <h2>💊 Medicamentos</h2>
+    <button onclick="mostrarFormularioMedicamento()">➕ Nuevo Medicamento</button>
+    <table id="tablaMedicamentos" border="1">
+      <thead>
+        <tr>
+          <th>Nombre Comercial</th>
+          <th>Presentación</th>
+          <th>Categoría</th>
+          <th>Proveedor</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-    <!-- ================== STOCK ================== -->
-    <section>
-      <h2>Stock Actual</h2>
-      <table id="tablaStock">
-        <thead>
-          <tr>
-            <th>Medicamento</th>
-            <th>Lote</th>
-            <th>Ingreso</th>
-            <th>Vencimiento</th>
-            <th>Cantidad</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <button onclick="mostrarFormularioMovimiento()">📦 Nuevo Movimiento</button>
-    </section>
+  <!-- Sección de Stock -->
+  <section>
+    <h2>📦 Stock</h2>
+    <button onclick="mostrarFormularioMovimiento()">📥 Nuevo Movimiento</button>
+    <table id="tablaStock" border="1">
+      <thead>
+        <tr>
+          <th>Medicamento</th>
+          <th>Lote</th>
+          <th>Ingreso</th>
+          <th>Vencimiento</th>
+          <th>Cantidad</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-    <!-- ================== VENTAS ================== -->
-    <section>
-      <h2>Ventas</h2>
-      <table id="tablaVentas">
-        <thead>
-          <tr>
-            <th>ID Venta</th>
-            <th>Cliente</th>
-            <th>Usuario</th>
-            <th>Total</th>
-            <th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <button onclick="mostrarFormularioVenta()">🛒 Nueva Venta</button>
-    </section>
-  </main>
+  <!-- Sección de Ventas -->
+  <section>
+    <h2>🧾 Ventas</h2>
+    <form id="formVenta">
+      <label for="medicamentoVenta">Medicamento:</label>
+      <select id="medicamentoVenta" required></select>
 
-  <!-- ================== MODAL REUTILIZABLE ================== -->
-  <div id="modal" class="modal hidden">
+      <label for="cantidadVenta">Cantidad:</label>
+      <input type="number" id="cantidadVenta" min="1" required>
+
+      <button type="button" onclick="agregarDetalleVenta()">➕ Agregar</button>
+    </form>
+
+    <h3>Detalles de Venta</h3>
+    <table id="tablaVenta" border="1">
+      <thead>
+        <tr>
+          <th>Medicamento</th>
+          <th>Cantidad</th>
+          <th>Subtotal</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p><strong>Total:</strong> S/ <span id="totalVenta">0</span></p>
+    <button onclick="finalizarVenta()">💾 Registrar Venta</button>
+  </section>
+
+  <!-- Modal Reutilizable -->
+  <div id="modal" class="hidden">
     <div class="modal-content">
-      <span class="close" onclick="cerrarModal()">&times;</span>
-      <h3 id="modalTitle"></h3>
+      <span onclick="cerrarModal()" class="close">&times;</span>
+      <h2 id="modalTitle"></h2>
       <form id="crudForm"></form>
-      <button onclick="cerrarModal()">Cancelar</button>
     </div>
   </div>
 
   <script src="script.js"></script>
+  <script>
+    // Inicializar select de medicamentos en ventas
+    async function cargarMedicamentosVenta() {
+      const res = await fetch(`${API_URL}/medicamentos`);
+      const medicamentos = await res.json();
+      const select = document.getElementById("medicamentoVenta");
+      select.innerHTML = "";
+      medicamentos.forEach(med => {
+        const option = document.createElement("option");
+        option.value = med.id;
+        option.textContent = `${med.nombre_comercial} - ${med.presentacion}`;
+        select.appendChild(option);
+      });
+    }
+
+    // Manejo de detalles de venta
+    let detallesVenta = [];
+
+    function agregarDetalleVenta() {
+      const select = document.getElementById("medicamentoVenta");
+      const cantidad = parseInt(document.getElementById("cantidadVenta").value);
+      if (!cantidad || cantidad <= 0) return alert("Cantidad inválida");
+
+      const id = select.value;
+      const nombre = select.options[select.selectedIndex].text;
+      const precio = 10; // Precio fijo temporal, puedes sacarlo de BD si lo manejas
+      const subtotal = cantidad * precio;
+
+      detallesVenta.push({ medicamento_id: id, cantidad, subtotal, nombre });
+
+      actualizarTablaVenta();
+      document.getElementById("cantidadVenta").value = "";
+    }
+
+    function eliminarDetalleVenta(index) {
+      detallesVenta.splice(index, 1);
+      actualizarTablaVenta();
+    }
+
+    function actualizarTablaVenta() {
+      const tbody = document.querySelector("#tablaVenta tbody");
+      tbody.innerHTML = "";
+
+      detallesVenta.forEach((d, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${d.nombre}</td>
+            <td>${d.cantidad}</td>
+            <td>S/ ${d.subtotal}</td>
+            <td><button onclick="eliminarDetalleVenta(${i})">❌</button></td>
+          </tr>`;
+      });
+
+      const total = detallesVenta.reduce((sum, d) => sum + d.subtotal, 0);
+      document.getElementById("totalVenta").innerText = total;
+    }
+
+    function finalizarVenta() {
+      if (detallesVenta.length === 0) return alert("No hay productos en la venta");
+      registrarVenta(detallesVenta);
+      detallesVenta = [];
+      actualizarTablaVenta();
+    }
+
+    // Ejecutar al cargar
+    window.onload = () => {
+      cargarMedicamentosVenta();
+    };
+  </script>
 </body>
 </html>
