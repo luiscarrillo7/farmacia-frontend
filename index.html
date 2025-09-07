@@ -836,14 +836,17 @@
         async function registrarVenta() {
             const clienteId = document.getElementById('venta_cliente_id').value;
             const items = Array.from(document.querySelectorAll('.venta-item')).map(itemDiv => {
+                const stockId = itemDiv.querySelector('.item-stock-id').value;
+                const cantidad = parseInt(itemDiv.querySelector('.item-cantidad').value);
+                const precioUnitario = parseFloat(itemDiv.querySelector('.item-precio').value);
                 return {
-                    stock_id: itemDiv.querySelector('.item-stock-id').value,
-                    cantidad: parseInt(itemDiv.querySelector('.item-cantidad').value),
-                    precio_unitario: parseFloat(itemDiv.querySelector('.item-precio').value)
+                    stock_id: stockId,
+                    cantidad: cantidad,
+                    precio_unitario: precioUnitario
                 };
             });
 
-            if (items.some(item => !item.stock_id || !item.cantidad || isNaN(item.precio_unitario) || item.precio_unitario <= 0)) {
+            if (items.some(item => !item.stock_id || isNaN(item.cantidad) || item.cantidad <= 0 || isNaN(item.precio_unitario) || item.precio_unitario <= 0)) {
                 showMessage('Error', 'Por favor, complete todos los campos de los items de la venta con valores válidos.');
                 return;
             }
@@ -871,7 +874,7 @@
                 }
             } catch (error) {
                 console.error('Error al conectar con la API:', error);
-                // Fallback to mock logic for this environment
+                // Fallback a mock logic
                 const newSale = {
                     id: `sale_${++nextSaleId}`,
                     cliente_id: clienteId || null,
