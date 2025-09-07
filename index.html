@@ -330,10 +330,10 @@
             { id: 'e0518684-12e3-4aac-8521-a19122d841e0', nombre_comercial: 'Paracetamol', presentacion: 'Tabletas 500mg', categoria: 'Analgésico', stock_total: 15 },
         ];
         mockStock = [
-            { id: '2d2a1d9f-a8d8-452a-9250-5f4a1df2c98f', medicamento_id: '90690a73-c742-4b6b-a52c-aba3bfffd639', tipo: 'INGRESO', cantidad: 147, lote: 'L002', fecha_vencimiento: '2024-11-15' },
-            { id: 'eb0ea80b-fcbc-40d7-bf91-6d948c92af6c', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'SALIDA', cantidad: 14, lote: '1', fecha_vencimiento: '2025-09-30' },
-            { id: '7a972458-dd29-4339-829b-44c0cb354df5', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'INGRESO', cantidad: 198, lote: 'L001', fecha_vencimiento: '2025-12-31' },
-            { id: '72497521-9c96-420c-9264-f954613465ee', medicamento_id: 'd0bc6332-10f6-44e8-92b7-9808b930c888', tipo: 'INGRESO', cantidad: 99, lote: 'L003', fecha_vencimiento: '2026-05-20' },
+            { id: '2d2a1d9f-a8d8-452a-9250-5f4a1df2c98f', medicamento_id: '90690a73-c742-4b6b-a52c-aba3bfffd639', tipo: 'INGRESO', cantidad: 147, lote: 'L002', fecha_vencimiento: '2024-11-15', precio_unitario: 1.20 },
+            { id: 'eb0ea80b-fcbc-40d7-bf91-6d948c92af6c', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'SALIDA', cantidad: 14, lote: '1', fecha_vencimiento: '2025-09-30', precio_unitario: 0.00 },
+            { id: '7a972458-dd29-4339-829b-44c0cb354df5', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'INGRESO', cantidad: 198, lote: 'L001', fecha_vencimiento: '2025-12-31', precio_unitario: 0.50 },
+            { id: '72497521-9c96-420c-9264-f954613465ee', medicamento_id: 'd0bc6332-10f6-44e8-92b7-9808b930c888', tipo: 'INGRESO', cantidad: 99, lote: 'L003', fecha_vencimiento: '2026-05-20', precio_unitario: 0.80 },
         ];
         mockSales = [
             { id: 'sale_1', cliente_id: 'client_1', usuario_id: 'user-temp', fecha: '2025-09-06T10:00:00Z', total: 25.50 },
@@ -729,9 +729,13 @@
 
         function mostrarFormularioVenta() {
             modalTitle.textContent = "Registrar Nueva Venta";
-            let medicationOptionsHtml = '<option value="">Seleccionar Medicamento</option>';
-            mockMedications.forEach(med => {
-                medicationOptionsHtml += `<option value="${med.id}">${med.nombre_comercial} - ${med.presentacion}</option>`;
+            
+            let stockOptionsHtml = '<option value="">Seleccionar Producto</option>';
+            mockStock.forEach(s => {
+                const medication = mockMedications.find(m => m.id === s.medicamento_id);
+                if (medication) {
+                    stockOptionsHtml += `<option value="${s.id}" data-precio="${s.precio_unitario}">${medication.nombre_comercial} - ${medication.presentacion} (Lote: ${s.lote})</option>`;
+                }
             });
 
             let clientOptionsHtml = '<option value="">Seleccionar Cliente</option>';
@@ -748,9 +752,9 @@
                 <div id="ventaItems" class="space-y-4">
                     <!-- Item 1 -->
                     <div class="venta-item flex space-x-2">
-                        <select class="item-med-id w-1/2 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${medicationOptionsHtml}</select>
+                        <select class="item-stock-id w-1/2 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${stockOptionsHtml}</select>
                         <input type="number" class="item-cantidad w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Cant." required min="1">
-                        <input type="number" class="item-precio w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Precio" required step="0.01">
+                        <input type="number" class="item-precio w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Precio" required step="0.01" readonly>
                     </div>
                 </div>
                 <button type="button" onclick="agregarItemVenta()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg mt-2 transition-colors duration-200">
@@ -759,37 +763,75 @@
                 <div class="text-right font-bold text-xl mt-4">Total: <span id="ventaTotal">$0.00</span></div>
                 <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 mt-4">Registrar Venta</button>
             `;
+
+            crudForm.querySelectorAll('.item-stock-id').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const selectedOption = e.target.options[e.target.selectedIndex];
+                    const precioInput = e.target.closest('.venta-item').querySelector('.item-precio');
+                    precioInput.value = selectedOption.dataset.precio || '';
+                    actualizarTotalVenta();
+                });
+            });
+
+            crudForm.querySelectorAll('.item-cantidad').forEach(input => {
+                input.addEventListener('input', actualizarTotalVenta);
+            });
+
             crudForm.onsubmit = (e) => {
                 e.preventDefault();
                 registrarVenta();
             };
+            
             showModal();
         }
 
         function agregarItemVenta() {
             const container = document.getElementById('ventaItems');
-            const medicationOptionsHtml = document.querySelector('.item-med-id').innerHTML;
+            const stockOptionsHtml = document.querySelector('.item-stock-id').innerHTML;
             const newItemHtml = `
-                <div class="venta-item flex space-x-2">
-                    <select class="item-med-id w-1/2 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${medicationOptionsHtml}</select>
+                <div class="venta-item flex space-x-2 mt-2">
+                    <select class="item-stock-id w-1/2 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${stockOptionsHtml}</select>
                     <input type="number" class="item-cantidad w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Cant." required min="1">
-                    <input type="number" class="item-precio w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Precio" required step="0.01">
+                    <input type="number" class="item-precio w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Precio" required step="0.01" readonly>
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', newItemHtml);
+
+            const newSelect = container.lastElementChild.querySelector('.item-stock-id');
+            const newQuantityInput = container.lastElementChild.querySelector('.item-cantidad');
+            
+            newSelect.addEventListener('change', (e) => {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                const precioInput = e.target.closest('.venta-item').querySelector('.item-precio');
+                precioInput.value = selectedOption.dataset.precio || '';
+                actualizarTotalVenta();
+            });
+
+            newQuantityInput.addEventListener('input', actualizarTotalVenta);
+        }
+        
+        function actualizarTotalVenta() {
+            let total = 0;
+            const items = document.querySelectorAll('.venta-item');
+            items.forEach(itemDiv => {
+                const cantidad = parseFloat(itemDiv.querySelector('.item-cantidad').value) || 0;
+                const precio = parseFloat(itemDiv.querySelector('.item-precio').value) || 0;
+                total += cantidad * precio;
+            });
+            document.getElementById('ventaTotal').textContent = `$${total.toFixed(2)}`;
         }
 
         function registrarVenta() {
             const clienteId = document.getElementById('venta_cliente_id').value;
             const items = Array.from(document.querySelectorAll('.venta-item')).map(itemDiv => {
                 return {
-                    medicamento_id: itemDiv.querySelector('.item-med-id').value,
+                    stock_id: itemDiv.querySelector('.item-stock-id').value,
                     cantidad: parseInt(itemDiv.querySelector('.item-cantidad').value),
                     precio_unitario: parseFloat(itemDiv.querySelector('.item-precio').value)
                 };
             });
 
-            if (items.some(item => !item.medicamento_id || !item.cantidad || !item.precio_unitario)) {
+            if (items.some(item => !item.stock_id || !item.cantidad || !item.precio_unitario)) {
                 showMessage('Error', 'Por favor, complete todos los campos de los items de la venta.');
                 return;
             }
