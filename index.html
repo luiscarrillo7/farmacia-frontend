@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmacia App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        .stock-bajo {
+            background-color: #fff3cd !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <!-- Main Container for the entire app -->
+    <div id="app" class="w-full h-full max-w-full">
+        <!-- Login View -->
+        <div id="loginView" class="hidden">
+            <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full">
+                <h2 class="text-3xl font-bold text-center text-blue-800 mb-6">Ingreso al Sistema</h2>
+                <form id="loginForm" class="space-y-4">
+                    <input type="text" id="dni" placeholder="DNI" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                    <input type="password" id="password" placeholder="Contraseña" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">Ingresar</button>
+                </form>
+                <p id="errorMsg" class="text-red-500 text-center mt-4"></p>
+                <div class="text-sm text-center text-gray-500 mt-4">
+                    <p>Para esta demostración, puedes usar cualquier DNI y contraseña. Los datos son simulados y se almacenan temporalmente en tu navegador.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboardView" class="hidden min-h-screen w-full">
+            <header class="bg-blue-800 text-white p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between">
+                <h1 class="text-2xl font-bold flex items-center gap-2">📦 Sistema de Farmacia <span id="userName" class="text-base font-normal"></span></h1>
+                <button id="logoutBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">Salir</button>
+            </header>
+
+            <main class="p-4 sm:p-8 max-w-7xl mx-auto space-y-8">
+                <section class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                        <h2 class="text-2xl font-semibold text-blue-700">Inventario de Medicamentos</h2>
+                        <button id="addMedicationBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                            ➕ Nuevo Medicamento
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Presentación</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="medicationTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Medicamentos will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                        <h2 class="text-2xl font-semibold text-blue-700">Movimientos de Stock</h2>
+                        <button id="addStockMovementBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                            📦 Nuevo Movimiento
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicamento</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lote</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimiento</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Stock movements will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                
+                <!-- New Reports Section -->
+                <section class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-blue-700 mb-4">Reportes</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Stock Bajo -->
+                        <div class="bg-red-50 p-4 rounded-lg shadow-md border-l-4 border-red-500">
+                            <h3 class="font-bold text-lg text-red-600 mb-2">Stock Bajo</h3>
+                            <p class="text-sm text-gray-700 mb-2">Medicamentos con menos de 10 unidades.</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-left font-medium text-red-700">
+                                            <th class="py-1">Medicamento</th>
+                                            <th class="py-1">Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stockBajoTableBody" class="divide-y divide-red-200">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Ventas Diarias -->
+                        <div class="bg-green-50 p-4 rounded-lg shadow-md border-l-4 border-green-500">
+                            <h3 class="font-bold text-lg text-green-600 mb-2">Ventas Diarias (Últimos 7 días)</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-left font-medium text-green-700">
+                                            <th class="py-1">Fecha</th>
+                                            <th class="py-1">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ventasDiariasTableBody" class="divide-y divide-green-200">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for CRUD and Notifications -->
+    <div id="appModal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full transform transition-all scale-95 opacity-0 duration-300" id="modalContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modalTitle" class="text-2xl font-bold text-blue-700"></h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800 transition-colors duration-200">&times;</button>
+            </div>
+            <form id="crudForm" class="space-y-4"></form>
+            <div id="notificationContent" class="text-center text-lg hidden"></div>
+            <div id="confirmationContent" class="text-center text-lg hidden">
+                <p id="confirmationMessage"></p>
+                <div class="flex justify-center gap-4 mt-6">
+                    <button id="confirmBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">Confirmar</button>
+                    <button onclick="closeModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define la URL de la API para uso futuro
+        const API_URL = "https://farmacia-269414280318.europe-west1.run.app";
+        
+        // Data Storage
+        let mockMedications = [];
+        let mockStock = [];
+        let loggedInUser = null;
+
+        // DOM Elements
+        const loginView = document.getElementById('loginView');
+        const dashboardView = document.getElementById('dashboardView');
+        const loginForm = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const userNameDisplay = document.getElementById('userName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const medicationTableBody = document.getElementById('medicationTableBody');
+        const stockTableBody = document.getElementById('stockTableBody');
+        const addMedicationBtn = document.getElementById('addMedicationBtn');
+        const addStockMovementBtn = document.getElementById('addStockMovementBtn');
+        const stockBajoTableBody = document.getElementById('stockBajoTableBody');
+        const ventasDiariasTableBody = document.getElementById('ventasDiariasTableBody');
+        const appModal = document.getElementById('appModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const crudForm = document.getElementById('crudForm');
+        const modalContent = document.getElementById('modalContent');
+        const notificationContent = document.getElementById('notificationContent');
+        const confirmationContent = document.getElementById('confirmationContent');
+        const confirmBtn = document.getElementById('confirmBtn');
+
+        // --- UTILITIES ---
+        const showModal = () => {
+            appModal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        };
+
+        const closeModal = () => {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                appModal.classList.add('hidden');
+                crudForm.innerHTML = '';
+                notificationContent.classList.add('hidden');
+                confirmationContent.classList.add('hidden');
+            }, 300);
+        };
+
+        const showMessage = (title, message) => {
+            modalTitle.textContent = title;
+            notificationContent.textContent = message;
+            notificationContent.classList.remove('hidden');
+            showModal();
+        };
+
+        const showConfirmation = (message, onConfirm) => {
+            modalTitle.textContent = "Confirmar Acción";
+            confirmationMessage.textContent = message;
+            confirmationContent.classList.remove('hidden');
+            confirmBtn.onclick = () => {
+                onConfirm();
+                closeModal();
+            };
+            showModal();
+        };
+
+        // --- AUTHENTICATION ---
+        const verificarAutenticacion = () => {
+            if (loggedInUser) {
+                loginView.classList.add('hidden');
+                dashboardView.classList.remove('hidden');
+                userNameDisplay.textContent = `- Bienvenido ${loggedInUser.name}`;
+                cargarMedicamentos();
+                cargarStock();
+                cargarReportes();
+            } else {
+                loginView.classList.remove('hidden');
+                dashboardView.classList.add('hidden');
+            }
+        };
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const dni = document.getElementById('dni').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                // This fetch call is for real-world deployment. In this environment, it will fail and fall back to the mock logic.
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dni, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    loggedInUser = {
+                        name: data.nombre,
+                        id: data.id
+                    };
+                    errorMsg.textContent = '';
+                } else {
+                    errorMsg.textContent = 'Credenciales inválidas';
+                }
+            } catch (error) {
+                console.error('API call failed, using mock data:', error);
+                // Fallback to mock logic for this environment
+                if (dni && password) {
+                    loggedInUser = { name: `Usuario ${dni}`, id: 'mock-user-id' };
+                    errorMsg.textContent = '';
+                } else {
+                    errorMsg.textContent = 'Credenciales inválidas';
+                }
+            }
+            verificarAutenticacion();
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            loggedInUser = null;
+            verificarAutenticacion();
+        });
+
+        // --- DATA MANAGEMENT (Mock API) ---
+        // Simulating IDs
+        let nextMedId = 1;
+        let nextStockId = 1;
+        let nextReportId = 1;
+
+        // Initial Data for demonstration
+        mockMedications = [
+            { id: (nextMedId++).toString(), nombre_comercial: 'Ibuprofeno', presentacion: '400mg', categoria: 'Analgésico', stock_total: 50 },
+            { id: (nextMedId++).toString(), nombre_comercial: 'Amoxicilina', presentacion: '500mg', categoria: 'Antibiótico', stock_total: 10 },
+            { id: (nextMedId++).toString(), nombre_comercial: 'Loratadina', presentacion: '10mg', categoria: 'Antihistamínico', stock_total: 3 },
+            { id: (nextMedId++).toString(), nombre_comercial: 'Omeprazol', presentacion: '20mg', categoria: 'Gastrointestinal', stock_total: 8 },
+            { id: (nextMedId++).toString(), nombre_comercial: 'Paracetamol', presentacion: '500mg', categoria: 'Analgésico', stock_total: 15 },
+        ];
+        mockStock = [
+            { id: (nextStockId++).toString(), medicamento_id: mockMedications[0].id, tipo: 'INGRESO', cantidad: 50, lote: 'L12345', fecha_vencimiento: '2025-12-31' },
+            { id: (nextStockId++).toString(), medicamento_id: mockMedications[1].id, tipo: 'INGRESO', cantidad: 10, lote: 'L67890', fecha_vencimiento: '2024-10-15' },
+            { id: (nextStockId++).toString(), medicamento_id: mockMedications[2].id, tipo: 'INGRESO', cantidad: 5, lote: 'LABCDE', fecha_vencimiento: '2026-05-20' },
+            { id: (nextStockId++).toString(), medicamento_id: mockMedications[2].id, tipo: 'SALIDA', cantidad: 2, lote: 'LABCDE', fecha_vencimiento: '2026-05-20' },
+        ];
+        
+        const mockReports = {
+            stockBajo: mockMedications.filter(m => m.stock_total < 10),
+            ventasDiarias: [
+                { fecha: '2025-09-06', total_diario: 150.50 },
+                { fecha: '2025-09-05', total_diario: 210.00 },
+                { fecha: '2025-09-04', total_diario: 95.75 },
+                { fecha: '2025-09-03', total_diario: 180.20 },
+                { fecha: '2025-09-02', total_diario: 75.00 },
+                { fecha: '2025-09-01', total_diario: 250.40 },
+                { fecha: '2025-08-31', total_diario: 120.90 }
+            ]
+        };
+
+        async function cargarMedicamentos() {
+            try {
+                // This fetch call is for real-world deployment. In this environment, it will fail and fall back to the mock logic.
+                const response = await fetch(`${API_URL}/medicamentos`);
+                const meds = await response.json();
+                
+                const tbody = document.querySelector("#medicationTableBody");
+                tbody.innerHTML = "";
+                
+                meds.forEach(m => {
+                    const row = document.createElement('tr');
+                    row.className = "transition-colors duration-200 hover:bg-gray-50";
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${m.nombre_comercial || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${m.presentacion || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${m.categoria || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${m.stock_total || 0}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editMedication('${m.id}')" class="text-blue-600 hover:text-blue-900 transition-colors duration-200">✏️</button>
+                            <button onclick="deleteMedication('${m.id}')" class="text-red-600 hover:text-red-900 ml-2 transition-colors duration-200">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar medicamentos desde la API, usando datos simulados:', error);
+                // Fallback a los datos simulados
+                const meds = mockMedications;
+                const tbody = document.querySelector("#medicationTableBody");
+                tbody.innerHTML = "";
+                
+                meds.forEach(m => {
+                    const row = document.createElement('tr');
+                    row.className = "transition-colors duration-200 hover:bg-gray-50";
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${m.nombre_comercial || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${m.presentacion || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${m.categoria || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${m.stock_total || 0}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editMedication('${m.id}')" class="text-blue-600 hover:text-blue-900 transition-colors duration-200">✏️</button>
+                            <button onclick="deleteMedication('${m.id}')" class="text-red-600 hover:text-red-900 ml-2 transition-colors duration-200">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        async function cargarStock() {
+            try {
+                // This fetch call is for real-world deployment. In this environment, it will fail and fall back to the mock logic.
+                const response = await fetch(`${API_URL}/stock`);
+                const stock = await response.json();
+                
+                const tbody = document.querySelector("#stockTableBody");
+                tbody.innerHTML = "";
+
+                stock.forEach(s => {
+                    const medication = mockMedications.find(m => m.id === s.medicamento_id);
+                    const medicationName = medication ? medication.nombre_comercial : 'N/A';
+                    const fechaVencimiento = new Date(s.fecha_vencimiento).toLocaleDateString();
+                    const stockClass = s.cantidad <= 10 && s.tipo === 'INGRESO' ? 'stock-bajo' : '';
+                    
+                    const row = document.createElement('tr');
+                    row.className = `${stockClass} transition-colors duration-200 hover:bg-gray-50`;
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${medicationName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${s.tipo}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${s.cantidad}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${s.lote || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${fechaVencimiento}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar stock desde la API, usando datos simulados:', error);
+                // Fallback a los datos simulados
+                const stock = mockStock;
+                const tbody = document.querySelector("#stockTableBody");
+                tbody.innerHTML = "";
+
+                stock.forEach(s => {
+                    const medication = mockMedications.find(m => m.id === s.medicamento_id);
+                    const medicationName = medication ? medication.nombre_comercial : 'N/A';
+                    const fechaVencimiento = new Date(s.fecha_vencimiento).toLocaleDateString();
+                    const stockClass = s.cantidad <= 10 && s.tipo === 'INGRESO' ? 'stock-bajo' : '';
+                    
+                    const row = document.createElement('tr');
+                    row.className = `${stockClass} transition-colors duration-200 hover:bg-gray-50`;
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${medicationName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${s.tipo}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${s.cantidad}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${s.lote || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${fechaVencimiento}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        async function cargarReportes() {
+            // Cargar Stock Bajo
+            try {
+                const response = await fetch(`${API_URL}/reportes/stock-bajo`);
+                const reportData = await response.json();
+                console.log(reportData); // Para depurar
+            } catch (error) {
+                console.error('Error al cargar reporte de stock bajo, usando datos simulados:', error);
+                stockBajoTableBody.innerHTML = '';
+                mockReports.stockBajo.forEach(med => {
+                    stockBajoTableBody.innerHTML += `
+                        <tr class="transition-colors duration-200 hover:bg-red-100">
+                            <td class="py-1">${med.nombre_comercial}</td>
+                            <td class="py-1">${med.stock_total}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            // Cargar Ventas Diarias
+            try {
+                const response = await fetch(`${API_URL}/reportes/ventas-diarias?dias=7`);
+                const reportData = await response.json();
+                console.log(reportData); // Para depurar
+            } catch (error) {
+                console.error('Error al cargar reporte de ventas diarias, usando datos simulados:', error);
+                ventasDiariasTableBody.innerHTML = '';
+                mockReports.ventasDiarias.forEach(venta => {
+                    ventasDiariasTableBody.innerHTML += `
+                        <tr class="transition-colors duration-200 hover:bg-green-100">
+                            <td class="py-1">${new Date(venta.fecha).toLocaleDateString()}</td>
+                            <td class="py-1">${venta.total_diario.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function mostrarFormularioMedicamento(id = null) {
+            modalTitle.textContent = id ? "Editar Medicamento" : "Nuevo Medicamento";
+            crudForm.innerHTML = `
+                <input type="text" id="nombre_comercial" placeholder="Nombre Comercial" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
+                <input type="text" id="nombre_generico" placeholder="Nombre Genérico" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">
+                <input type="text" id="presentacion" placeholder="Presentación" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
+                <input type="text" id="categoria" placeholder="Categoría" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">
+                <input type="text" id="laboratorio" placeholder="Laboratorio" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">
+                <textarea id="descripcion" placeholder="Descripción" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500 h-24 resize-y"></textarea>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">${id ? 'Actualizar' : 'Crear'}</button>
+            `;
+            crudForm.onsubmit = (e) => {
+                e.preventDefault();
+                if (id) {
+                    actualizarMedicamento(id);
+                } else {
+                    crearMedicamento();
+                }
+            };
+            if (id) cargarDatosMedicamento(id);
+            showModal();
+        }
+
+        function cargarDatosMedicamento(id) {
+            const med = mockMedications.find(m => m.id === id);
+            if (med) {
+                document.getElementById('nombre_comercial').value = med.nombre_comercial || '';
+                document.getElementById('nombre_generico').value = med.nombre_generico || '';
+                document.getElementById('presentacion').value = med.presentacion || '';
+                document.getElementById('categoria').value = med.categoria || '';
+                document.getElementById('laboratorio').value = med.laboratorio || '';
+                document.getElementById('descripcion').value = med.descripcion || '';
+            } else {
+                showMessage('Error', 'Medicamento no encontrado.');
+            }
+        }
+
+        function crearMedicamento() {
+            const newMed = {
+                id: (nextMedId++).toString(),
+                nombre_comercial: document.getElementById('nombre_comercial').value,
+                nombre_generico: document.getElementById('nombre_generico').value,
+                presentacion: document.getElementById('presentacion').value,
+                categoria: document.getElementById('categoria').value,
+                laboratorio: document.getElementById('laboratorio').value,
+                descripcion: document.getElementById('descripcion').value,
+                stock_total: 0,
+                fecha_creacion: new Date().toISOString(),
+            };
+            mockMedications.push(newMed);
+            closeModal();
+            cargarMedicamentos();
+            showMessage('Éxito', 'Medicamento creado exitosamente.');
+        }
+
+        function actualizarMedicamento(id) {
+            const medIndex = mockMedications.findIndex(m => m.id === id);
+            if (medIndex !== -1) {
+                mockMedications[medIndex] = {
+                    ...mockMedications[medIndex],
+                    nombre_comercial: document.getElementById('nombre_comercial').value,
+                    nombre_generico: document.getElementById('nombre_generico').value,
+                    presentacion: document.getElementById('presentacion').value,
+                    categoria: document.getElementById('categoria').value,
+                    laboratorio: document.getElementById('laboratorio').value,
+                    descripcion: document.getElementById('descripcion').value,
+                };
+                closeModal();
+                cargarMedicamentos();
+                showMessage('Éxito', 'Medicamento actualizado exitosamente.');
+            } else {
+                showMessage('Error', 'Medicamento no encontrado.');
+            }
+        }
+
+        function editarMedicamento(id) {
+            mostrarFormularioMedicamento(id);
+        }
+
+        function eliminarMedicamento(id) {
+            showConfirmation('¿Estás seguro de que quieres eliminar este medicamento?', () => {
+                const medIndex = mockMedications.findIndex(m => m.id === id);
+                if (medIndex !== -1) {
+                    mockMedications.splice(medIndex, 1);
+                    mockStock = mockStock.filter(s => s.medicamento_id !== id);
+                    cargarMedicamentos();
+                    cargarStock();
+                    showMessage('Éxito', 'Medicamento y movimientos de stock eliminados.');
+                } else {
+                    showMessage('Error', 'Medicamento no encontrado.');
+                }
+            });
+        }
+
+        function mostrarFormularioMovimiento() {
+            modalTitle.textContent = "Registrar Movimiento de Stock";
+            let optionsHtml = '<option value="">Seleccionar Medicamento</option>';
+            mockMedications.forEach(med => {
+                optionsHtml += `<option value="${med.id}">${med.nombre_comercial} - ${med.presentacion}</option>`;
+            });
+
+            crudForm.innerHTML = `
+                <select id="medicamento_id" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${optionsHtml}</select>
+                <select id="tipo" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
+                    <option value="INGRESO">Ingreso</option>
+                    <option value="SALIDA">Salida</option>
+                </select>
+                <input type="number" id="cantidad" placeholder="Cantidad" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required min="1">
+                <input type="text" id="lote" placeholder="Lote" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
+                <input type="date" id="fecha_vencimiento" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
+                <textarea id="motivo" placeholder="Motivo/Observaciones" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500 h-24 resize-y"></textarea>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">Registrar Movimiento</button>
+            `;
+            crudForm.onsubmit = (e) => {
+                e.preventDefault();
+                registrarMovimiento();
+            };
+            showModal();
+        }
+
+        function registrarMovimiento() {
+            const medicationId = document.getElementById('medicamento_id').value;
+            const type = document.getElementById('tipo').value;
+            const quantity = parseInt(document.getElementById('cantidad').value);
+            const med = mockMedications.find(m => m.id === medicationId);
+
+            if (!med) {
+                showMessage('Error', 'Medicamento no encontrado.');
+                return;
+            }
+            
+            if (type === 'SALIDA' && med.stock_total < quantity) {
+                showMessage('Error', 'No hay suficiente stock para esta salida.');
+                return;
+            }
+
+            const movement = {
+                id: (nextStockId++).toString(),
+                medicamento_id: medicationId,
+                tipo: type,
+                cantidad: quantity,
+                lote: document.getElementById('lote').value,
+                fecha_vencimiento: document.getElementById('fecha_vencimiento').value,
+                motivo: document.getElementById('motivo').value,
+                fecha_movimiento: new Date().toISOString(),
+                usuario_id: 'user-temp',
+            };
+            mockStock.push(movement);
+            
+            if (type === 'INGRESO') {
+                med.stock_total += quantity;
+            } else {
+                med.stock_total -= quantity;
+            }
+
+            closeModal();
+            cargarMedicamentos();
+            cargarStock();
+            showMessage('Éxito', 'Movimiento registrado exitosamente.');
+        }
+
+        // Global functions to be called from HTML onclick attributes
+        window.editMedication = editarMedicamento;
+        window.deleteMedication = eliminarMedicamento;
+        window.mostrarFormularioMedicamento = mostrarFormularioMedicamento;
+        window.mostrarFormularioMovimiento = mostrarFormularioMovimiento;
+        window.closeModal = closeModal;
+
+        // Event Listeners
+        addMedicationBtn.addEventListener('click', () => mostrarFormularioMedicamento());
+        addStockMovementBtn.addEventListener('click', () => mostrarFormularioMovimiento());
+        
+        // Initial check
+        verificarAutenticacion();
+    </script>
+</body>
+</html>
