@@ -731,9 +731,7 @@
                 });
             } catch (error) {
                 console.error('Error al cargar medicamentos:', error);
-                mockMedications.forEach(med => {
-                    optionsHtml += `<option value="${med.id}">${med.nombre_comercial} - ${med.presentacion}</option>`;
-                });
+                optionsHtml = `<option value="">Error al cargar</option>`;
             }
             
             crudForm.innerHTML = `
@@ -774,11 +772,8 @@
                     }
                 } catch (error) {
                     console.error('Error al validar stock:', error);
-                    const med = mockMedications.find(m => m.id === medicationId);
-                    if (med && med.stock_total < quantity) {
-                        showMessage('Error', `Stock insuficiente (simulado). Disponible: ${med.stock_total}`);
-                        return;
-                    }
+                    showMessage('Error', `Error al validar stock: ${error.message}`);
+                    return;
                 }
             }
 
@@ -962,17 +957,6 @@
                 }
             } catch (error) {
                 console.error('Error al conectar con la API:', error);
-                // Fallback a mock logic
-                const newSale = {
-                    id: `sale_${++nextSaleId}`,
-                    cliente_id: clienteId || null,
-                    usuario_id: loggedInUser.id,
-                    fecha: new Date().toISOString(),
-                    total: items.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0)
-                };
-                mockSales.push(newSale);
-                closeModal();
-                cargarVentas();
                 showMessage('Éxito (Simulado)', 'Venta registrada localmente. No se pudo conectar a la API.');
             }
         }
