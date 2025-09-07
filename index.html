@@ -36,7 +36,7 @@
                 </form>
                 <p id="errorMsg" class="text-red-500 text-center mt-4"></p>
                 <div class="text-sm text-center text-gray-500 mt-4">
-                    <p>Para esta demostracion, puedes usar cualquier DNI y contraseña. Los datos son simulados y se almacenan temporalmente en tu navegador.</p>
+                    <p>Para esta demostración, puedes usar cualquier DNI y contraseña. Los datos son simulados y se almacenan temporalmente en tu navegador.</p>
                 </div>
             </div>
         </div>
@@ -660,7 +660,7 @@
             });
         }
 
-        function mostrarFormularioMovimiento() {
+        async function mostrarFormularioMovimiento() {
             modalTitle.textContent = "Registrar Movimiento de Stock";
             let optionsHtml = '<option value="">Seleccionar Medicamento</option>';
             mockMedications.forEach(med => {
@@ -727,11 +727,13 @@
             showMessage('Éxito', 'Movimiento registrado exitosamente.');
         }
 
-        function mostrarFormularioVenta() {
+        async function mostrarFormularioVenta() {
             modalTitle.textContent = "Registrar Nueva Venta";
             
             let stockOptionsHtml = '<option value="">Seleccionar Producto</option>';
-            mockStock.forEach(s => {
+            // Simulate fetching stock data
+            const stockData = mockStock;
+            stockData.forEach(s => {
                 const medication = mockMedications.find(m => m.id === s.medicamento_id);
                 if (medication) {
                     stockOptionsHtml += `<option value="${s.id}" data-precio="${s.precio_unitario}">${medication.nombre_comercial} - ${medication.presentacion} (Lote: ${s.lote})</option>`;
@@ -739,9 +741,19 @@
             });
 
             let clientOptionsHtml = '<option value="">Seleccionar Cliente</option>';
-            mockClients.forEach(client => {
-                clientOptionsHtml += `<option value="${client.id}">${client.nombre} ${client.apellido}</option>`;
-            });
+            // Simulate fetching client data
+            try {
+                const response = await fetch(`${API_URL}/clientes`);
+                const clients = await response.json();
+                clients.forEach(client => {
+                    clientOptionsHtml += `<option value="${client.id}">${client.nombre} ${client.apellido}</option>`;
+                });
+            } catch (error) {
+                console.error('Error al cargar clientes desde la API, usando datos simulados:', error);
+                mockClients.forEach(client => {
+                    clientOptionsHtml += `<option value="${client.id}">${client.nombre} ${client.apellido}</option>`;
+                });
+            }
 
             crudForm.innerHTML = `
                 <div class="flex flex-col space-y-2">
