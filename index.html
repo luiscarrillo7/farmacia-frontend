@@ -290,21 +290,18 @@
         // Simulating IDs
         let nextMedId = 1;
         let nextStockId = 1;
-        let nextReportId = 1;
 
         // Initial Data for demonstration
         mockMedications = [
-            { id: (nextMedId++).toString(), nombre_comercial: 'Ibuprofeno', presentacion: '400mg', categoria: 'Analgésico', stock_total: 50 },
-            { id: (nextMedId++).toString(), nombre_comercial: 'Amoxicilina', presentacion: '500mg', categoria: 'Antibiótico', stock_total: 10 },
-            { id: (nextMedId++).toString(), nombre_comercial: 'Loratadina', presentacion: '10mg', categoria: 'Antihistamínico', stock_total: 3 },
-            { id: (nextMedId++).toString(), nombre_comercial: 'Omeprazol', presentacion: '20mg', categoria: 'Gastrointestinal', stock_total: 8 },
-            { id: (nextMedId++).toString(), nombre_comercial: 'Paracetamol', presentacion: '500mg', categoria: 'Analgésico', stock_total: 15 },
+            { id: '90690a73-c742-4b6b-a52c-aba3bfffd639', nombre_comercial: 'Amoxicilina', presentacion: 'Cápsulas 500mg', categoria: 'Antibiótico', stock_total: 10 },
+            { id: 'd0bc6332-10f6-44e8-92b7-9808b930c888', nombre_comercial: 'Ibuprofeno', presentacion: 'Tabletas 400mg', categoria: 'Antiinflamatorio', stock_total: 50 },
+            { id: 'e0518684-12e3-4aac-8521-a19122d841e0', nombre_comercial: 'Paracetamol', presentacion: 'Tabletas 500mg', categoria: 'Analgésico', stock_total: 15 },
         ];
         mockStock = [
-            { id: (nextStockId++).toString(), medicamento_id: mockMedications[0].id, tipo: 'INGRESO', cantidad: 50, lote: 'L12345', fecha_vencimiento: '2025-12-31' },
-            { id: (nextStockId++).toString(), medicamento_id: mockMedications[1].id, tipo: 'INGRESO', cantidad: 10, lote: 'L67890', fecha_vencimiento: '2024-10-15' },
-            { id: (nextStockId++).toString(), medicamento_id: mockMedications[2].id, tipo: 'INGRESO', cantidad: 5, lote: 'LABCDE', fecha_vencimiento: '2026-05-20' },
-            { id: (nextStockId++).toString(), medicamento_id: mockMedications[2].id, tipo: 'SALIDA', cantidad: 2, lote: 'LABCDE', fecha_vencimiento: '2026-05-20' },
+            { id: '2d2a1d9f-a8d8-452a-9250-5f4a1df2c98f', medicamento_id: '90690a73-c742-4b6b-a52c-aba3bfffd639', tipo: 'INGRESO', cantidad: 147, lote: 'L002', fecha_vencimiento: '2024-11-15' },
+            { id: 'eb0ea80b-fcbc-40d7-bf91-6d948c92af6c', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'SALIDA', cantidad: 14, lote: '1', fecha_vencimiento: '2025-09-30' },
+            { id: '7a972458-dd29-4339-829b-44c0cb354df5', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'INGRESO', cantidad: 198, lote: 'L001', fecha_vencimiento: '2025-12-31' },
+            { id: '72497521-9c96-420c-9264-f954613465ee', medicamento_id: 'd0bc6332-10f6-44e8-92b7-9808b930c888', tipo: 'INGRESO', cantidad: 99, lote: 'L003', fecha_vencimiento: '2026-05-20' },
         ];
         
         const mockReports = {
@@ -322,21 +319,32 @@
 
         async function cargarMedicamentos() {
             try {
-                // This fetch call is for real-world deployment. In this environment, it will fail and fall back to the mock logic.
+                // Fetch de datos de medicamentos desde la API
                 const response = await fetch(`${API_URL}/medicamentos`);
                 const meds = await response.json();
+                
+                // Fetch de datos de stock para calcular el total
+                const stockResponse = await fetch(`${API_URL}/stock?select=medicamento_id,cantidad`);
+                const stockData = await stockResponse.json();
+
+                const medicationStock = new Map();
+                stockData.forEach(s => {
+                    const currentStock = medicationStock.get(s.medicamento_id) || 0;
+                    medicationStock.set(s.medicamento_id, currentStock + s.cantidad);
+                });
                 
                 const tbody = document.querySelector("#medicationTableBody");
                 tbody.innerHTML = "";
                 
                 meds.forEach(m => {
+                    const totalStock = medicationStock.get(m.id) || 0;
                     const row = document.createElement('tr');
                     row.className = "transition-colors duration-200 hover:bg-gray-50";
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">${m.nombre_comercial || 'N/A'}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${m.presentacion || 'N/A'}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${m.categoria || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${m.stock_total || 0}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${totalStock}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <button onclick="editMedication('${m.id}')" class="text-blue-600 hover:text-blue-900 transition-colors duration-200">✏️</button>
                             <button onclick="deleteMedication('${m.id}')" class="text-red-600 hover:text-red-900 ml-2 transition-colors duration-200">🗑️</button>
@@ -371,21 +379,19 @@
 
         async function cargarStock() {
             try {
-                // This fetch call is for real-world deployment. In this environment, it will fail and fall back to the mock logic.
-                const response = await fetch(`${API_URL}/stock`);
+                // Fetch de datos desde el endpoint de movimientos
+                const response = await fetch(`${API_URL}/movimientos`);
                 const stock = await response.json();
                 
                 const tbody = document.querySelector("#stockTableBody");
                 tbody.innerHTML = "";
 
                 stock.forEach(s => {
-                    const medication = mockMedications.find(m => m.id === String(s.medicamento_id));
-                    const medicationName = medication ? medication.nombre_comercial : 'N/A';
-                    const fechaVencimiento = new Date(s.fecha_vencimiento).toLocaleDateString();
-                    const stockClass = s.cantidad <= 10 && s.tipo === 'INGRESO' ? 'stock-bajo' : '';
+                    const medicationName = s.medicamentos ? s.medicamentos.nombre_comercial : 'N/A';
+                    const fechaVencimiento = new Date(s.fecha_movimiento).toLocaleDateString();
                     
                     const row = document.createElement('tr');
-                    row.className = `${stockClass} transition-colors duration-200 hover:bg-gray-50`;
+                    row.className = `transition-colors duration-200 hover:bg-gray-50`;
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">${medicationName}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${s.tipo}</td>
@@ -403,13 +409,12 @@
                 tbody.innerHTML = "";
 
                 stock.forEach(s => {
-                    const medication = mockMedications.find(m => m.id === String(s.medicamento_id));
+                    const medication = mockMedications.find(m => m.id === s.medicamento_id);
                     const medicationName = medication ? medication.nombre_comercial : 'N/A';
                     const fechaVencimiento = new Date(s.fecha_vencimiento).toLocaleDateString();
-                    const stockClass = s.cantidad <= 10 && s.tipo === 'INGRESO' ? 'stock-bajo' : '';
                     
                     const row = document.createElement('tr');
-                    row.className = `${stockClass} transition-colors duration-200 hover:bg-gray-50`;
+                    row.className = `transition-colors duration-200 hover:bg-gray-50`;
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">${medicationName}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${s.tipo}</td>
@@ -427,7 +432,16 @@
             try {
                 const response = await fetch(`${API_URL}/reportes/stock-bajo`);
                 const reportData = await response.json();
-                console.log(reportData); // Para depurar
+                
+                stockBajoTableBody.innerHTML = '';
+                reportData.forEach(med => {
+                    stockBajoTableBody.innerHTML += `
+                        <tr class="transition-colors duration-200 hover:bg-red-100">
+                            <td class="py-1">${med.medicamentos.nombre_comercial}</td>
+                            <td class="py-1">${med.cantidad}</td>
+                        </tr>
+                    `;
+                });
             } catch (error) {
                 console.error('Error al cargar reporte de stock bajo, usando datos simulados:', error);
                 stockBajoTableBody.innerHTML = '';
@@ -445,7 +459,16 @@
             try {
                 const response = await fetch(`${API_URL}/reportes/ventas-diarias?dias=7`);
                 const reportData = await response.json();
-                console.log(reportData); // Para depurar
+                
+                ventasDiariasTableBody.innerHTML = '';
+                reportData.forEach(venta => {
+                    ventasDiariasTableBody.innerHTML += `
+                        <tr class="transition-colors duration-200 hover:bg-green-100">
+                            <td class="py-1">${new Date(venta.fecha).toLocaleDateString()}</td>
+                            <td class="py-1">${venta.total_diario.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
             } catch (error) {
                 console.error('Error al cargar reporte de ventas diarias, usando datos simulados:', error);
                 ventasDiariasTableBody.innerHTML = '';
@@ -499,7 +522,7 @@
 
         function crearMedicamento() {
             const newMed = {
-                id: (nextMedId++).toString(),
+                id: `med_${mockMedications.length + 1}`,
                 nombre_comercial: document.getElementById('nombre_comercial').value,
                 nombre_generico: document.getElementById('nombre_generico').value,
                 presentacion: document.getElementById('presentacion').value,
@@ -597,7 +620,7 @@
             }
 
             const movement = {
-                id: (nextStockId++).toString(),
+                id: `stk_${mockStock.length + 1}`,
                 medicamento_id: medicationId,
                 tipo: type,
                 cantidad: quantity,
