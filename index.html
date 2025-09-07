@@ -379,7 +379,7 @@
                 tbody.innerHTML = "";
 
                 stock.forEach(s => {
-                    const medication = mockMedications.find(m => m.id === s.medicamento_id);
+                    const medication = mockMedications.find(m => m.id === String(s.medicamento_id));
                     const medicationName = medication ? medication.nombre_comercial : 'N/A';
                     const fechaVencimiento = new Date(s.fecha_vencimiento).toLocaleDateString();
                     const stockClass = s.cantidad <= 10 && s.tipo === 'INGRESO' ? 'stock-bajo' : '';
@@ -403,7 +403,7 @@
                 tbody.innerHTML = "";
 
                 stock.forEach(s => {
-                    const medication = mockMedications.find(m => m.id === s.medicamento_id);
+                    const medication = mockMedications.find(m => m.id === String(s.medicamento_id));
                     const medicationName = medication ? medication.nombre_comercial : 'N/A';
                     const fechaVencimiento = new Date(s.fecha_vencimiento).toLocaleDateString();
                     const stockClass = s.cantidad <= 10 && s.tipo === 'INGRESO' ? 'stock-bajo' : '';
