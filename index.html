@@ -732,13 +732,24 @@
             
             let stockOptionsHtml = '<option value="">Seleccionar Producto</option>';
             // Simulate fetching stock data
-            const stockData = mockStock;
-            stockData.forEach(s => {
-                const medication = mockMedications.find(m => m.id === s.medicamento_id);
-                if (medication) {
-                    stockOptionsHtml += `<option value="${s.id}" data-precio="${s.precio_unitario}">${medication.nombre_comercial} - ${medication.presentacion} (Lote: ${s.lote})</option>`;
-                }
-            });
+            try {
+                const stockResponse = await fetch(`${API_URL}/stock?select=id,medicamento_id,precio_unitario,lote,medicamentos(nombre_comercial,presentacion)`);
+                const stockData = await stockResponse.json();
+                stockData.forEach(s => {
+                    const medication = s.medicamentos;
+                    if (medication) {
+                        stockOptionsHtml += `<option value="${s.id}" data-precio="${s.precio_unitario}">${medication.nombre_comercial} - ${medication.presentacion} (Lote: ${s.lote})</option>`;
+                    }
+                });
+            } catch (error) {
+                console.error('Error al cargar stock desde la API, usando datos simulados:', error);
+                mockStock.forEach(s => {
+                    const medication = mockMedications.find(m => m.id === s.medicamento_id);
+                    if (medication) {
+                        stockOptionsHtml += `<option value="${s.id}" data-precio="${s.precio_unitario}">${medication.nombre_comercial} - ${medication.presentacion} (Lote: ${s.lote})</option>`;
+                    }
+                });
+            }
 
             let clientOptionsHtml = '<option value="">Seleccionar Cliente</option>';
             // Simulate fetching client data
