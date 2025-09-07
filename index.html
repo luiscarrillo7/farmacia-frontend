@@ -339,7 +339,7 @@
         mockSuppliers = [];
         
         const mockReports = {
-            stockBajo: mockMedications.filter(m => m.stock_total < 10),
+            stockBajo: [],
             ventasDiarias: []
         };
 
@@ -754,12 +754,7 @@
                 });
             } catch (error) {
                 console.error('Error al cargar stock desde la API, usando datos simulados:', error);
-                mockStock.forEach(s => {
-                    const medication = mockMedications.find(m => m.id === s.medicamento_id);
-                    if (medication) {
-                        stockOptionsHtml += `<option value="${s.id}" data-precio="${s.precio_unitario}">${medication.nombre_comercial} - ${medication.presentacion} (Lote: ${s.lote})</option>`;
-                    }
-                });
+                stockData = []; // Clear stockData on error
             }
 
             let clientOptionsHtml = '<option value="">Seleccionar Cliente</option>';
