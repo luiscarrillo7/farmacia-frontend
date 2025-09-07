@@ -465,7 +465,7 @@
 
         async function cargarVentas() {
             try {
-                const response = await fetch(`${API_URL}/ventas`);
+                const response = await fetch(`${API_URL}/ventas?select=*,clientes(nombre,apellido),usuarios(nombre,apellido)`);
                 const sales = await response.json();
                 
                 const tbody = document.querySelector("#salesTableBody");
@@ -833,7 +833,7 @@
             document.getElementById('ventaTotal').textContent = `$${total.toFixed(2)}`;
         }
 
-        function registrarVenta() {
+        async function registrarVenta() {
             const clienteId = document.getElementById('venta_cliente_id').value;
             const items = Array.from(document.querySelectorAll('.venta-item')).map(itemDiv => {
                 return {
@@ -843,23 +843,47 @@
                 };
             });
 
-            if (items.some(item => !item.stock_id || !item.cantidad || !item.precio_unitario)) {
-                showMessage('Error', 'Por favor, complete todos los campos de los items de la venta.');
+            if (items.some(item => !item.stock_id || !item.cantidad || isNaN(item.precio_unitario) || item.precio_unitario <= 0)) {
+                showMessage('Error', 'Por favor, complete todos los campos de los items de la venta con valores válidos.');
                 return;
             }
 
-            const newSale = {
-                id: `sale_${++nextSaleId}`,
-                cliente_id: clienteId || null,
-                usuario_id: loggedInUser.id,
-                fecha: new Date().toISOString(),
-                total: items.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0)
+            const ventaData = {
+                usuarioId: loggedInUser.id,
+                clienteId: clienteId || null,
+                items: items
             };
-            mockSales.push(newSale);
 
-            closeModal();
-            cargarVentas();
-            showMessage('Éxito', 'Venta registrada exitosamente.');
+            try {
+                const response = await fetch(`${API_URL}/ventas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(ventaData)
+                });
+                
+                if (response.ok) {
+                    closeModal();
+                    cargarVentas(); // Recarga los datos desde la API
+                    showMessage('Éxito', 'Venta registrada exitosamente.');
+                } else {
+                    const errorText = await response.text();
+                    showMessage('Error', `Error al registrar venta: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error al conectar con la API:', error);
+                // Fallback to mock logic for this environment
+                const newSale = {
+                    id: `sale_${++nextSaleId}`,
+                    cliente_id: clienteId || null,
+                    usuario_id: loggedInUser.id,
+                    fecha: new Date().toISOString(),
+                    total: items.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0)
+                };
+                mockSales.push(newSale);
+                closeModal();
+                cargarVentas();
+                showMessage('Éxito (Simulado)', 'Venta registrada localmente. No se pudo conectar a la API.');
+            }
         }
 
         // Global functions to be called from HTML onclick attributes
