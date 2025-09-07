@@ -837,7 +837,7 @@
             }
 
             const newSale = {
-                id: `sale_${nextSaleId++}`,
+                id: `sale_${++nextSaleId}`,
                 cliente_id: clienteId || null,
                 usuario_id: loggedInUser.id,
                 fecha: new Date().toISOString(),
