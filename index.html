@@ -26,7 +26,7 @@
     <!-- Main Container for the entire app -->
     <div id="app" class="w-full h-full max-w-full">
         <!-- Login View -->
-        <div id="loginView" class="hidden">
+        <div id="loginView" class="block">
             <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full">
                 <h2 class="text-3xl font-bold text-center text-blue-800 mb-6">Ingreso al Sistema</h2>
                 <form id="loginForm" class="space-y-4">
@@ -202,15 +202,7 @@
         
         const mockReports = {
             stockBajo: mockMedications.filter(m => m.stock_total < 10),
-            ventasDiarias: [
-                { fecha: '2025-09-06', total_diario: 150.50 },
-                { fecha: '2025-09-05', total_diario: 210.00 },
-                { fecha: '2025-09-04', total_diario: 95.75 },
-                { fecha: '2025-09-03', total_diario: 180.20 },
-                { fecha: '2025-09-02', total_diario: 75.00 },
-                { fecha: '2025-09-01', total_diario: 250.40 },
-                { fecha: '2025-08-31', total_diario: 120.90 }
-            ]
+            ventasDiarias: []
         };
 
         // DOM Elements
