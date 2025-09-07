@@ -98,6 +98,31 @@
                         </table>
                     </div>
                 </section>
+
+                <!-- New Sales Section -->
+                <section class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                        <h2 class="text-2xl font-semibold text-blue-700">Ventas</h2>
+                        <button id="addSaleBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                            ➕ Nueva Venta
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atendido por</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Sales will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
                 
                 <!-- New Reports Section -->
                 <section class="bg-white p-6 rounded-2xl shadow-lg">
@@ -169,7 +194,10 @@
         // Data Storage
         let mockMedications = [];
         let mockStock = [];
+        let mockSales = [];
         let loggedInUser = null;
+        let mockClients = [{id: 'client_1', nombre: 'Juan', apellido: 'Perez'}];
+        let mockUsers = [{id: 'user-temp', nombre: 'Usuario', apellido: 'Demo'}];
 
         // DOM Elements
         const loginView = document.getElementById('loginView');
@@ -180,8 +208,10 @@
         const logoutBtn = document.getElementById('logoutBtn');
         const medicationTableBody = document.getElementById('medicationTableBody');
         const stockTableBody = document.getElementById('stockTableBody');
+        const salesTableBody = document.getElementById('salesTableBody');
         const addMedicationBtn = document.getElementById('addMedicationBtn');
         const addStockMovementBtn = document.getElementById('addStockMovementBtn');
+        const addSaleBtn = document.getElementById('addSaleBtn');
         const stockBajoTableBody = document.getElementById('stockBajoTableBody');
         const ventasDiariasTableBody = document.getElementById('ventasDiariasTableBody');
         const appModal = document.getElementById('appModal');
@@ -238,6 +268,7 @@
                 userNameDisplay.textContent = `- Bienvenido ${loggedInUser.name}`;
                 cargarMedicamentos();
                 cargarStock();
+                cargarVentas();
                 cargarReportes();
             } else {
                 loginView.classList.remove('hidden');
@@ -290,6 +321,7 @@
         // Simulating IDs
         let nextMedId = 1;
         let nextStockId = 1;
+        let nextSaleId = 1;
 
         // Initial Data for demonstration
         mockMedications = [
@@ -302,6 +334,10 @@
             { id: 'eb0ea80b-fcbc-40d7-bf91-6d948c92af6c', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'SALIDA', cantidad: 14, lote: '1', fecha_vencimiento: '2025-09-30' },
             { id: '7a972458-dd29-4339-829b-44c0cb354df5', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'INGRESO', cantidad: 198, lote: 'L001', fecha_vencimiento: '2025-12-31' },
             { id: '72497521-9c96-420c-9264-f954613465ee', medicamento_id: 'd0bc6332-10f6-44e8-92b7-9808b930c888', tipo: 'INGRESO', cantidad: 99, lote: 'L003', fecha_vencimiento: '2026-05-20' },
+        ];
+        mockSales = [
+            { id: 'sale_1', cliente_id: 'client_1', usuario_id: 'user-temp', fecha: '2025-09-06T10:00:00Z', total: 25.50 },
+            { id: 'sale_2', cliente_id: 'client_1', usuario_id: 'user-temp', fecha: '2025-09-05T15:30:00Z', total: 10.00 },
         ];
         
         const mockReports = {
@@ -421,6 +457,53 @@
                         <td class="px-6 py-4 whitespace-nowrap">${s.cantidad}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${s.lote || 'N/A'}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${fechaVencimiento}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        async function cargarVentas() {
+            try {
+                const response = await fetch(`${API_URL}/ventas`);
+                const sales = await response.json();
+                
+                const tbody = document.querySelector("#salesTableBody");
+                tbody.innerHTML = "";
+
+                sales.forEach(s => {
+                    const cliente = s.clientes ? `${s.clientes.nombre} ${s.clientes.apellido}` : 'Público General';
+                    const usuario = s.usuarios ? `${s.usuarios.nombre} ${s.usuarios.apellido}` : 'N/A';
+                    const fecha = new Date(s.fecha).toLocaleDateString();
+
+                    const row = document.createElement('tr');
+                    row.className = `transition-colors duration-200 hover:bg-gray-50`;
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${fecha}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${s.total.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${cliente}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${usuario}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar ventas desde la API, usando datos simulados:', error);
+                const sales = mockSales;
+                const tbody = document.querySelector("#salesTableBody");
+                tbody.innerHTML = "";
+
+                sales.forEach(s => {
+                    const cliente = mockClients.find(c => c.id === s.cliente_id)?.nombre || 'Público General';
+                    const usuario = mockUsers.find(u => u.id === s.usuario_id)?.nombre || 'N/A';
+                    const fecha = new Date(s.fecha).toLocaleDateString();
+
+                    const row = document.createElement('tr');
+                    row.className = `transition-colors duration-200 hover:bg-gray-50`;
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${fecha}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${s.total.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${cliente}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${usuario}</td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -644,16 +727,100 @@
             showMessage('Éxito', 'Movimiento registrado exitosamente.');
         }
 
+        function mostrarFormularioVenta() {
+            modalTitle.textContent = "Registrar Nueva Venta";
+            let medicationOptionsHtml = '<option value="">Seleccionar Medicamento</option>';
+            mockMedications.forEach(med => {
+                medicationOptionsHtml += `<option value="${med.id}">${med.nombre_comercial} - ${med.presentacion}</option>`;
+            });
+
+            let clientOptionsHtml = '<option value="">Seleccionar Cliente</option>';
+            mockClients.forEach(client => {
+                clientOptionsHtml += `<option value="${client.id}">${client.nombre} ${client.apellido}</option>`;
+            });
+
+            crudForm.innerHTML = `
+                <div class="flex flex-col space-y-2">
+                    <label for="venta_cliente_id" class="text-sm font-semibold">Cliente:</label>
+                    <select id="venta_cliente_id" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">${clientOptionsHtml}</select>
+                </div>
+                <h4 class="text-lg font-semibold mt-4">Detalle de la Venta</h4>
+                <div id="ventaItems" class="space-y-4">
+                    <!-- Item 1 -->
+                    <div class="venta-item flex space-x-2">
+                        <select class="item-med-id w-1/2 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${medicationOptionsHtml}</select>
+                        <input type="number" class="item-cantidad w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Cant." required min="1">
+                        <input type="number" class="item-precio w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Precio" required step="0.01">
+                    </div>
+                </div>
+                <button type="button" onclick="agregarItemVenta()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg mt-2 transition-colors duration-200">
+                    ➕ Añadir Item
+                </button>
+                <div class="text-right font-bold text-xl mt-4">Total: <span id="ventaTotal">$0.00</span></div>
+                <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 mt-4">Registrar Venta</button>
+            `;
+            crudForm.onsubmit = (e) => {
+                e.preventDefault();
+                registrarVenta();
+            };
+            showModal();
+        }
+
+        function agregarItemVenta() {
+            const container = document.getElementById('ventaItems');
+            const medicationOptionsHtml = document.querySelector('.item-med-id').innerHTML;
+            const newItemHtml = `
+                <div class="venta-item flex space-x-2">
+                    <select class="item-med-id w-1/2 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${medicationOptionsHtml}</select>
+                    <input type="number" class="item-cantidad w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Cant." required min="1">
+                    <input type="number" class="item-precio w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Precio" required step="0.01">
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', newItemHtml);
+        }
+
+        function registrarVenta() {
+            const clienteId = document.getElementById('venta_cliente_id').value;
+            const items = Array.from(document.querySelectorAll('.venta-item')).map(itemDiv => {
+                return {
+                    medicamento_id: itemDiv.querySelector('.item-med-id').value,
+                    cantidad: parseInt(itemDiv.querySelector('.item-cantidad').value),
+                    precio_unitario: parseFloat(itemDiv.querySelector('.item-precio').value)
+                };
+            });
+
+            if (items.some(item => !item.medicamento_id || !item.cantidad || !item.precio_unitario)) {
+                showMessage('Error', 'Por favor, complete todos los campos de los items de la venta.');
+                return;
+            }
+
+            const newSale = {
+                id: `sale_${nextSaleId++}`,
+                cliente_id: clienteId || null,
+                usuario_id: loggedInUser.id,
+                fecha: new Date().toISOString(),
+                total: items.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0)
+            };
+            mockSales.push(newSale);
+
+            closeModal();
+            cargarVentas();
+            showMessage('Éxito', 'Venta registrada exitosamente.');
+        }
+
         // Global functions to be called from HTML onclick attributes
         window.editMedication = editarMedicamento;
         window.deleteMedication = eliminarMedicamento;
         window.mostrarFormularioMedicamento = mostrarFormularioMedicamento;
         window.mostrarFormularioMovimiento = mostrarFormularioMovimiento;
+        window.mostrarFormularioVenta = mostrarFormularioVenta;
         window.closeModal = closeModal;
+        window.agregarItemVenta = agregarItemVenta;
 
         // Event Listeners
         addMedicationBtn.addEventListener('click', () => mostrarFormularioMedicamento());
         addStockMovementBtn.addEventListener('click', () => mostrarFormularioMovimiento());
+        addSaleBtn.addEventListener('click', () => mostrarFormularioVenta());
         
         // Initial check
         verificarAutenticacion();
