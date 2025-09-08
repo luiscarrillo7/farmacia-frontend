@@ -128,14 +128,34 @@ const showRegisterBtn = document.getElementById('showRegister');
 async function apiFetch(endpoint, options = {}) {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) throw new Error("No estás autenticado.");
-    const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` };
-    const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers: { ...headers, ...options.headers } });
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+    };
+
+    const config = {
+        ...options,
+        headers: {
+            ...headers,
+            ...options.headers,
+        },
+    };
+    
+    // CORRECCIÓN: Aseguramos que la URL se construya sin dobles slashes '/'
+    const finalUrl = `${API_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+
+    const response = await fetch(finalUrl, config);
+
     if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Error de la API: ${errorText}`);
+        throw new Error(`Error de la API (${response.status}): ${errorText}`);
     }
+    
     const contentType = response.headers.get("content-type");
-    if (contentType?.includes("application/json")) return response.json();
+    if (contentType?.includes("application/json")) {
+        return response.json();
+    }
     return {};
 }
 
