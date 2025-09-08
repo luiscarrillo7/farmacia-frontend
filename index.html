@@ -275,7 +275,7 @@ async function renderVentas() {
 async function showLoteForm() {
     try {
         const [medicamentos, proveedores] = await Promise.all([apiFetch('/medicamentos'), apiFetch('/proveedores')]);
-        const medOptions = medicamentos.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+        const medOptions = medicamentos.map(m => `<option value="${m.id}" data-precio="${m.precio_venta}">${m.nombre}</option>`).join('');
         const provOptions = proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
         
         const formHtml = `
@@ -302,7 +302,7 @@ async function showLoteForm() {
 async function showSaleForm() {
     try {
         const [medicamentos, clientes] = await Promise.all([apiFetch('/medicamentos'), apiFetch('/clientes')]);
-        const medOptions = medicamentos.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+        const medOptions = medicamentos.map(m => `<option value="${m.id}" data-precio="${m.precio_venta}">${m.nombre}</option>`).join('');
         const clientOptions = clientes.map(c => `<option value="${c.id}">${c.nombre} ${c.apellido} (${c.dni})</option>`).join('');
 
         const formHtml = `
