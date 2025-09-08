@@ -339,7 +339,7 @@ async function showSaleForm() {
             itemDiv.innerHTML = `
                 <select class="item-medicamento-id flex-grow p-2 border rounded">${medOptions}</select>
                 <input type="number" class="item-cantidad w-20 p-2 border rounded" placeholder="Cant." min="1" required>
-                <input type="number" class="item-precio w-24 p-2 border rounded" placeholder="Precio U." step="0.01" required>
+                <input type="number" class="item-precio w-24 p-2 border rounded bg-gray-100" placeholder="Precio U." step="0.01" required readonly>
                 <button type="button" class="removeItemBtn text-red-500">✖️</button>
             `;
             itemsContainer.appendChild(itemDiv);
@@ -349,6 +349,13 @@ async function showSaleForm() {
         itemsContainer.addEventListener('click', e => {
             if (e.target.classList.contains('removeItemBtn')) e.target.parentElement.remove();
         });
+        itemsContainer.addEventListener('change', e => {
+        if (e.target.classList.contains('item-medicamento-id')) {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const precioInput = e.target.closest('.venta-item').querySelector('.item-precio');
+        precioInput.value = selectedOption.dataset.precio || '0.00';
+        }
+    });
     } catch(error) { alert(`Error al preparar formulario: ${error.message}`); }
 }
 
