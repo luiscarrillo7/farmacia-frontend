@@ -143,12 +143,15 @@ async function apiFetch(endpoint, options = {}) {
     };
     
     // CORRECCIÓN: Aseguramos que la URL se construya sin dobles slashes '/'
+    // Esto elimina una barra del final de API_URL si existe,
+    // y una barra del inicio del endpoint si existe, luego une con una sola barra.
     const finalUrl = `${API_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 
     const response = await fetch(finalUrl, config);
 
     if (!response.ok) {
         const errorText = await response.text();
+        // Agregamos el status del error para más claridad
         throw new Error(`Error de la API (${response.status}): ${errorText}`);
     }
     
