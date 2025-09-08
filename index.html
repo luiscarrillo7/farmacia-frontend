@@ -105,8 +105,7 @@ const SUPABASE_URL = 'https://ccfgclymyeciqbgrdfuf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZmdjbHlteWVjaXFiZ3JkZnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4NTcwODQsImV4cCI6MjA3MjQzMzA4NH0.hN5kiIxFa4FAzsI4UWJGcKQyTTu30dk6M6ybN-PQ2GM';
 const API_URL = 'https://farmacia-269414280318.europe-west1.run.app'; // La que ya tenías
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const supabaseClient = supabase; // Usamos supabaseClient para claridad
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let appState = { session: null };
 
