@@ -106,7 +106,7 @@ const SUPABASE_URL = 'https://ccfgclymyeciqbgrdfuf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZmdjbHlteWVjaXFiZ3JkZnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4NTcwODQsImV4cCI6MjA3MjQzMzA4NH0.hN5kiIxFa4FAzsI4UWJGcKQyTTu30dk6M6ybN-PQ2GM';
 const API_URL = 'https://farmacia-269414280318.europe-west1.run.app'; // La que ya tenías
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let appState = { session: null };
 
@@ -129,7 +129,7 @@ const modalBody = document.getElementById('modalBody');
 // 🔹 2. HELPER FUNCTIONS (UTILITIES & API)
 // ============================================================================
 async function apiFetch(endpoint, options = {}) {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) throw new Error("No estás autenticado.");
 
     const headers = {
@@ -167,7 +167,7 @@ async function handleLogin(e) {
     errorMsg.textContent = '';
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) errorMsg.textContent = 'Credenciales incorrectas.';
 }
 
@@ -177,7 +177,7 @@ async function handleSignUp(e) {
     const formData = new FormData(form);
     const { email, password, nombre, apellido, dni } = Object.fromEntries(formData.entries());
 
-    const { error } = await supabase.auth.signUp({
+    const { error } = await supabaseClient.auth.signUp({
         email, password,
         options: { data: { nombre, apellido, dni } }
     });
@@ -191,7 +191,7 @@ async function handleSignUp(e) {
 }
 
 async function handleLogout() {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
 }
 
 function showRegisterForm() {
@@ -360,7 +360,7 @@ async function showSaleForm() {
 // 🔹 6. APP INITIALIZATION
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    supabase.auth.onAuthStateChange((_event, session) => {
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
         appState.session = session;
         updateDashboard();
     });
