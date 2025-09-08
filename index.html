@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farmacia App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Farmacia App v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -16,1036 +17,361 @@
             background-color: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
         }
-        .stock-bajo {
-            background-color: #fff3cd !important;
-        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-    <!-- Main Container for the entire app -->
     <div id="app" class="w-full h-full max-w-full">
-        <!-- Login View -->
-        <div id="loginView" class="block">
-            <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full">
+        <div id="loginView" class="hidden">
+            <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm mx-auto mt-20">
                 <h2 class="text-3xl font-bold text-center text-blue-800 mb-6">Ingreso al Sistema</h2>
                 <form id="loginForm" class="space-y-4">
-                    <input type="text" id="dni" placeholder="DNI" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                    <input type="email" id="email" placeholder="Correo Electrónico" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
                     <input type="password" id="password" placeholder="Contraseña" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">Ingresar</button>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Ingresar</button>
                 </form>
                 <p id="errorMsg" class="text-red-500 text-center mt-4"></p>
-                <div class="text-sm text-center text-gray-500 mt-4">
-                    <p>Para esta demostración, puedes usar cualquier DNI y contraseña. Los datos son simulados y se almacenan temporalmente en tu navegador.</p>
+                <div class="text-center mt-4">
+                    <a href="#" id="showRegister" class="text-sm text-blue-600 hover:underline">¿No tienes cuenta? Regístrate</a>
                 </div>
             </div>
         </div>
 
-        <!-- Dashboard View -->
         <div id="dashboardView" class="hidden min-h-screen w-full">
             <header class="bg-blue-800 text-white p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between">
                 <h1 class="text-2xl font-bold flex items-center gap-2">📦 Sistema de Farmacia <span id="userName" class="text-base font-normal"></span></h1>
-                <button id="logoutBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">Salir</button>
+                <button id="logoutBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors">Salir</button>
             </header>
 
             <main class="p-4 sm:p-8 max-w-7xl mx-auto space-y-8">
                 <section class="bg-white p-6 rounded-2xl shadow-lg">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                        <h2 class="text-2xl font-semibold text-blue-700">Inventario de Medicamentos</h2>
-                        <button id="addMedicationBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
-                            ➕ Nuevo Medicamento
-                        </button>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold text-blue-700">Lotes de Inventario</h2>
+                        <button id="addLoteBtn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">📦 Añadir Lote (Compra)</button>
                     </div>
-                    <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
+                    <div class="overflow-x-auto rounded-lg border">
+                        <table class="min-w-full divide-y">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Presentación</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicamento</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Proveedor</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cant. Actual</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vencimiento</th>
                                 </tr>
                             </thead>
-                            <tbody id="medicationTableBody" class="bg-white divide-y divide-gray-200">
-                                <!-- Medicamentos will be rendered here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section class="bg-white p-6 rounded-2xl shadow-lg">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                        <h2 class="text-2xl font-semibold text-blue-700">Movimientos de Stock</h2>
-                        <button id="addStockMovementBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
-                            📦 Nuevo Movimiento
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicamento</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lote</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimiento</th>
-                                </tr>
-                            </thead>
-                            <tbody id="stockTableBody" class="bg-white divide-y divide-gray-200">
-                                <!-- Stock movements will be rendered here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- New Sales Section -->
-                <section class="bg-white p-6 rounded-2xl shadow-lg">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                        <h2 class="text-2xl font-semibold text-blue-700">Ventas</h2>
-                        <button id="addSaleBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
-                            ➕ Nueva Venta
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atendido por</th>
-                                </tr>
-                            </thead>
-                            <tbody id="salesTableBody" class="bg-white divide-y divide-gray-200">
-                                <!-- Sales will be rendered here -->
-                            </tbody>
+                            <tbody id="lotesTableBody" class="bg-white divide-y"></tbody>
                         </table>
                     </div>
                 </section>
                 
-                <!-- New Suppliers Section -->
                 <section class="bg-white p-6 rounded-2xl shadow-lg">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                        <h2 class="text-2xl font-semibold text-blue-700">Proveedores</h2>
-                        <button id="addSupplierBtn" onclick="mostrarFormularioProveedor()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
-                            ➕ Nuevo Proveedor
-                        </button>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold text-blue-700">Ventas</h2>
+                        <button id="addSaleBtn" class="bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg">🛒 Nueva Venta</button>
                     </div>
-                    <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
+                    <div class="overflow-x-auto rounded-lg border">
+                        <table class="min-w-full divide-y">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RUC</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Atendido por</th>
                                 </tr>
                             </thead>
-                            <tbody id="suppliersTableBody" class="bg-white divide-y divide-gray-200">
-                                <!-- Proveedores will be rendered here -->
-                            </tbody>
+                            <tbody id="salesTableBody" class="bg-white divide-y"></tbody>
                         </table>
                     </div>
                 </section>
-
-                <!-- New Reports Section -->
-                <section class="bg-white p-6 rounded-2xl shadow-lg">
-                    <h2 class="text-2xl font-semibold text-blue-700 mb-4">Reportes</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Stock Bajo -->
-                        <div class="bg-red-50 p-4 rounded-lg shadow-md border-l-4 border-red-500">
-                            <h3 class="font-bold text-lg text-red-600 mb-2">Stock Bajo</h3>
-                            <p class="text-sm text-gray-700 mb-2">Medicamentos con menos de 10 unidades.</p>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm">
-                                    <thead>
-                                        <tr class="text-left font-medium text-red-700">
-                                            <th class="py-1">Medicamento</th>
-                                            <th class="py-1">Cantidad</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="stockBajoTableBody" class="divide-y divide-red-200">
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        
-                        <!-- Ventas Diarias -->
-                        <div class="bg-green-50 p-4 rounded-lg shadow-md border-l-4 border-green-500">
-                            <h3 class="font-bold text-lg text-green-600 mb-2">Ventas Diarias (Últimos 7 días)</h3>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm">
-                                    <thead>
-                                        <tr class="text-left font-medium text-green-700">
-                                            <th class="py-1">Fecha</th>
-                                            <th class="py-1">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="ventasDiariasTableBody" class="divide-y divide-green-200">
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </main>
+                
+                </main>
         </div>
     </div>
 
-    <!-- Modal for CRUD and Notifications -->
     <div id="appModal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 hidden">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full transform transition-all scale-95 opacity-0 duration-300" id="modalContent">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full" id="modalContent">
             <div class="flex justify-between items-center mb-6">
                 <h3 id="modalTitle" class="text-2xl font-bold text-blue-700"></h3>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800 transition-colors duration-200">&times;</button>
+                <button onclick="closeModal()" class="text-gray-500 text-3xl hover:text-gray-800">&times;</button>
             </div>
-            <form id="crudForm" class="space-y-4"></form>
-            <div id="notificationContent" class="text-center text-lg hidden"></div>
-            <div id="confirmationContent" class="text-center text-lg hidden">
-                <p id="confirmationMessage"></p>
-                <div class="flex justify-center gap-4 mt-6">
-                    <button id="confirmBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">Confirmar</button>
-                    <button onclick="closeModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">Cancelar</button>
-                </div>
-            </div>
+            <div id="modalBody"></div>
         </div>
     </div>
 
-    <script>
-        // Define la URL de la API para uso futuro
-        const API_URL = "https://farmacia-269414280318.europe-west1.run.app";
-        
-        // Data Storage
-        let mockMedications = [
-            { id: '90690a73-c742-4b6b-a52c-aba3bfffd639', nombre_comercial: 'Amoxicilina', presentacion: 'Cápsulas 500mg', categoria: 'Antibiótico', stock_total: 10, proveedor_id: 'prov_1' },
-            { id: 'd0bc6332-10f6-44e8-92b7-9808b930c888', nombre_comercial: 'Ibuprofeno', presentacion: 'Tabletas 400mg', categoria: 'Antiinflamatorio', stock_total: 50, proveedor_id: 'prov_1' },
-            { id: 'e0518684-12e3-4aac-8521-a19122d841e0', nombre_comercial: 'Paracetamol', presentacion: 'Tabletas 500mg', categoria: 'Analgésico', stock_total: 15, proveedor_id: 'prov_2' },
-        ];
-        let mockStock = [
-            { id: '2d2a1d9f-a8d8-452a-9250-5f4a1df2c98f', medicamento_id: '90690a73-c742-4b6b-a52c-aba3bfffd639', tipo: 'INGRESO', cantidad: 147, lote: 'L002', fecha_vencimiento: '2024-11-15', precio_unitario: 1.20 },
-            { id: 'eb0ea80b-fcbc-40d7-bf91-6d948c92af6c', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'SALIDA', cantidad: 14, lote: '1', fecha_vencimiento: '2025-09-30', precio_unitario: 0.00 },
-            { id: '7a972458-dd29-4339-829b-44c0cb354df5', medicamento_id: 'e0518684-12e3-4aac-8521-a19122d841e0', tipo: 'INGRESO', cantidad: 198, lote: 'L001', fecha_vencimiento: '2025-12-31', precio_unitario: 0.50 },
-            { id: '72497521-9c96-420c-9264-f954613465ee', medicamento_id: 'd0bc6332-10f6-44e8-92b7-9808b930c888', tipo: 'INGRESO', cantidad: 99, lote: 'L003', fecha_vencimiento: '2026-05-20', precio_unitario: 0.80 },
-        ];
-        let mockSales = [
-            { id: 'sale_1', cliente_id: 'client_1', usuario_id: 'user-temp', fecha: '2025-09-06T10:00:00Z', total: 25.50 },
-            { id: 'sale_2', cliente_id: 'client_1', usuario_id: 'user-temp', fecha: '2025-09-05T15:30:00Z', total: 10.00 },
-        ];
-        let mockClients = [
-            { id: 'dfd33950-7884-42a6-afa6-42fe68f534df', nombre: 'Carlos', apellido: 'Sánchez', dni: '44556677' },
-            { id: 'ea9b2f82-a922-4fd8-8831-ad75dd779b37', nombre: 'Lucía', apellido: 'Fernández', dni: '99887766' },
-        ];
-        let mockUsers = [
-            { id: '40569f4c-1e0f-40af-858f-a479652c359f', nombre: 'Luis', apellido: 'Torres' },
-            { id: 'c0b98f30-0875-4dec-bacf-ec5b1ad0e18c', nombre: 'María', apellido: 'Lopez' },
-        ];
-        let mockSuppliers = [
-            { id: 'prov_1', nombre: 'Farmindustria SAC', ruc: '20123456789' },
-            { id: 'prov_2', nombre: 'MedLife Perú', ruc: '20987654321' },
-        ];
-        
-        const mockReports = {
-            stockBajo: mockMedications.filter(m => m.stock_total < 10),
-            ventasDiarias: [
-                { fecha: '2025-09-06', total_diario: 150.50 },
-                { fecha: '2025-09-05', total_diario: 210.00 },
-                { fecha: '2025-09-04', total_diario: 95.75 },
-                { fecha: '2025-09-03', total_diario: 180.20 },
-                { fecha: '2025-09-02', total_diario: 75.00 },
-                { fecha: '2025-09-01', total_diario: 250.40 },
-                { fecha: '2025-08-31', total_diario: 120.90 }
-            ]
+<script>
+// ============================================================================
+// 🔹 1. CONFIGURACIÓN E INICIALIZACIÓN
+// ============================================================================
+const SUPABASE_URL = 'URL_DE_TU_PROYECTO_SUPABASE'; 
+const SUPABASE_ANON_KEY = 'ANON_KEY_DE_TU_PROYECTO_SUPABASE';
+const API_URL = 'URL_DE_TU_API_EN_.NET'; // La que ya tenías
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let appState = { session: null };
+
+const loginView = document.getElementById('loginView');
+const dashboardView = document.getElementById('dashboardView');
+const loginForm = document.getElementById('loginForm');
+const errorMsg = document.getElementById('errorMsg');
+const userNameDisplay = document.getElementById('userName');
+const logoutBtn = document.getElementById('logoutBtn');
+const lotesTableBody = document.getElementById('lotesTableBody');
+const salesTableBody = document.getElementById('salesTableBody');
+const addLoteBtn = document.getElementById('addLoteBtn');
+const addSaleBtn = document.getElementById('addSaleBtn');
+const showRegisterBtn = document.getElementById('showRegister');
+const appModal = document.getElementById('appModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalBody = document.getElementById('modalBody');
+
+// ============================================================================
+// 🔹 2. HELPER FUNCTIONS (UTILITIES & API)
+// ============================================================================
+async function apiFetch(endpoint, options = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("No estás autenticado.");
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+    };
+
+    const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers: { ...headers, ...options.headers } });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error de la API: ${errorText}`);
+    }
+    
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+        return response.json();
+    }
+    return {};
+}
+
+const showModal = (title, contentHtml) => {
+    modalTitle.textContent = title;
+    modalBody.innerHTML = contentHtml;
+    appModal.classList.remove('hidden');
+};
+const closeModal = () => appModal.classList.add('hidden');
+window.closeModal = closeModal; // Hacerla global para el botón 'x'
+
+// ============================================================================
+// 🔹 3. AUTHENTICATION
+// ============================================================================
+async function handleLogin(e) {
+    e.preventDefault();
+    errorMsg.textContent = '';
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) errorMsg.textContent = 'Credenciales incorrectas.';
+}
+
+async function handleSignUp(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const { email, password, nombre, apellido, dni } = Object.fromEntries(formData.entries());
+
+    const { error } = await supabase.auth.signUp({
+        email, password,
+        options: { data: { nombre, apellido, dni } }
+    });
+
+    closeModal();
+    if (error) {
+        alert(`Error en el registro: ${error.message}`);
+    } else {
+        alert('Registro Exitoso. Revisa tu correo para la confirmación.');
+    }
+}
+
+async function handleLogout() {
+    await supabase.auth.signOut();
+}
+
+function showRegisterForm() {
+    const formHtml = `
+        <form id="registerForm" class="space-y-4">
+            <input type="text" name="nombre" placeholder="Nombre" class="w-full px-4 py-2 border-2 rounded-lg" required>
+            <input type="text" name="apellido" placeholder="Apellido" class="w-full px-4 py-2 border-2 rounded-lg" required>
+            <input type="text" name="dni" placeholder="DNI" class="w-full px-4 py-2 border-2 rounded-lg" required>
+            <input type="email" name="email" placeholder="Correo Electrónico" class="w-full px-4 py-2 border-2 rounded-lg" required>
+            <input type="password" name="password" placeholder="Contraseña (mín. 6 caracteres)" class="w-full px-4 py-2 border-2 rounded-lg" required>
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Registrar</button>
+        </form>
+    `;
+    showModal("Registro de Nuevo Usuario", formHtml);
+    document.getElementById('registerForm').addEventListener('submit', handleSignUp);
+}
+
+// ============================================================================
+// 🔹 4. UI & DATA RENDERING
+// ============================================================================
+async function updateDashboard() {
+    if (!appState.session) {
+        loginView.style.display = 'flex';
+        dashboardView.style.display = 'none';
+        return;
+    }
+    loginView.style.display = 'none';
+    dashboardView.style.display = 'block';
+    
+    try {
+        const { data: perfil } = await supabase.from('perfiles').select('nombre, apellido').eq('id', appState.session.user.id).single();
+        if (perfil) userNameDisplay.textContent = `- Bienvenido ${perfil.nombre}`;
+    } catch (error) { console.error("Error al obtener perfil:", error); }
+    
+    await Promise.all([ renderLotes(), renderVentas() ]);
+}
+
+async function renderLotes() {
+    try {
+        const lotes = await apiFetch('/lotes');
+        lotesTableBody.innerHTML = lotes.map(lote => `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4">${lote.medicamentos.nombre}</td>
+                <td class="px-6 py-4">${lote.proveedores.nombre}</td>
+                <td class="px-6 py-4">${lote.cantidad_actual}</td>
+                <td class="px-6 py-4">${new Date(lote.fecha_vencimiento).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error al cargar lotes:', error);
+        lotesTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-500">Error al cargar lotes.</td></tr>`;
+    }
+}
+
+async function renderVentas() {
+    try {
+        const ventas = await apiFetch('/ventas');
+        salesTableBody.innerHTML = ventas.map(v => `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4">${new Date(v.fecha).toLocaleString()}</td>
+                <td class="px-6 py-4">$${v.total_venta.toFixed(2)}</td>
+                <td class="px-6 py-4">${v.clientes ? v.clientes.nombre + ' ' + v.clientes.apellido : 'Público General'}</td>
+                <td class="px-6 py-4">${v.perfiles ? v.perfiles.nombre + ' ' + v.perfiles.apellido : 'N/A'}</td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error al cargar ventas:', error);
+        salesTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-500">Error al cargar ventas.</td></tr>`;
+    }
+}
+
+// ============================================================================
+// 🔹 5. MODAL FORMS & CRUD OPERATIONS
+// ============================================================================
+async function showLoteForm() {
+    const [medicamentos, proveedores] = await Promise.all([apiFetch('/medicamentos'), apiFetch('/proveedores')]);
+    
+    const medOptions = medicamentos.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+    const provOptions = proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    
+    const formHtml = `
+        <form id="loteForm" class="space-y-4">
+            <select name="medicamento_id" class="w-full p-2 border rounded" required>${medOptions}</select>
+            <select name="proveedor_id" class="w-full p-2 border rounded" required>${provOptions}</select>
+            <input type="number" name="cantidad_inicial" placeholder="Cantidad Inicial" class="w-full p-2 border rounded" required>
+            <input type="number" name="precio_compra" placeholder="Precio de Compra (unitario)" step="0.01" class="w-full p-2 border rounded" required>
+            <input type="date" name="fecha_vencimiento" class="w-full p-2 border rounded" required>
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Añadir Lote</button>
+        </form>
+    `;
+    showModal("Añadir Nuevo Lote (Compra)", formHtml);
+
+    document.getElementById('loteForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const loteData = Object.fromEntries(formData.entries());
+        loteData.cantidad_actual = loteData.cantidad_inicial; // La cantidad actual es la misma que la inicial al crear
+
+        try {
+            await apiFetch('/lotes', { method: 'POST', body: JSON.stringify(loteData) });
+            closeModal();
+            renderLotes();
+        } catch (error) {
+            alert(`Error al crear lote: ${error.message}`);
+        }
+    });
+}
+
+async function showSaleForm() {
+    const [medicamentos, clientes] = await Promise.all([apiFetch('/medicamentos'), apiFetch('/clientes')]);
+
+    const medOptions = medicamentos.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+    const clientOptions = clientes.map(c => `<option value="${c.id}">${c.nombre} ${c.apellido} (${c.dni})</option>`).join('');
+
+    const formHtml = `
+        <form id="saleForm" class="space-y-4">
+            <select name="clienteId" class="w-full p-2 border rounded"><option value="">Público General</option>${clientOptions}</select>
+            <div id="ventaItems" class="space-y-2"></div>
+            <button type="button" id="addItemBtn" class="bg-gray-200 p-2 rounded">➕ Añadir Producto</button>
+            <button type="submit" class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg">Registrar Venta</button>
+        </form>
+    `;
+    showModal("Registrar Nueva Venta", formHtml);
+
+    const itemsContainer = document.getElementById('ventaItems');
+    const addItem = () => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'venta-item flex gap-2';
+        itemDiv.innerHTML = `
+            <select class="item-medicamento-id flex-grow p-2 border rounded">${medOptions}</select>
+            <input type="number" class="item-cantidad w-20 p-2 border rounded" placeholder="Cant." min="1" required>
+            <input type="number" class="item-precio w-24 p-2 border rounded" placeholder="Precio U." step="0.01" required>
+            <button type="button" class="removeItemBtn text-red-500">✖️</button>
+        `;
+        itemsContainer.appendChild(itemDiv);
+    };
+    addItem();
+    document.getElementById('addItemBtn').addEventListener('click', addItem);
+    itemsContainer.addEventListener('click', e => {
+        if (e.target.classList.contains('removeItemBtn')) e.target.parentElement.remove();
+    });
+
+    document.getElementById('saleForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const ventaData = {
+            usuarioId: appState.session.user.id,
+            clienteId: e.target.elements.clienteId.value || null,
+            items: Array.from(document.querySelectorAll('.venta-item')).map(div => ({
+                medicamentoId: parseInt(div.querySelector('.item-medicamento-id').value),
+                cantidad: parseInt(div.querySelector('.item-cantidad').value),
+                precioUnitario: parseFloat(div.querySelector('.item-precio').value)
+            }))
         };
-
-        // DOM Elements
-        const loginView = document.getElementById('loginView');
-        const dashboardView = document.getElementById('dashboardView');
-        const loginForm = document.getElementById('loginForm');
-        const errorMsg = document.getElementById('errorMsg');
-        const userNameDisplay = document.getElementById('userName');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const medicationTableBody = document.getElementById('medicationTableBody');
-        const stockTableBody = document.getElementById('stockTableBody');
-        const salesTableBody = document.getElementById('salesTableBody');
-        const addMedicationBtn = document.getElementById('addMedicationBtn');
-        const addStockMovementBtn = document.getElementById('addStockMovementBtn');
-        const addSaleBtn = document.getElementById('addSaleBtn');
-        const addSupplierBtn = document.getElementById('addSupplierBtn');
-        const suppliersTableBody = document.getElementById('suppliersTableBody');
-        const stockBajoTableBody = document.getElementById('stockBajoTableBody');
-        const ventasDiariasTableBody = document.getElementById('ventasDiariasTableBody');
-        const appModal = document.getElementById('appModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const crudForm = document.getElementById('crudForm');
-        const modalContent = document.getElementById('modalContent');
-        const notificationContent = document.getElementById('notificationContent');
-        const confirmationContent = document.getElementById('confirmationContent');
-        const confirmBtn = document.getElementById('confirmBtn');
-
-        // --- UTILITIES ---
-        const showModal = () => {
-            appModal.classList.remove('hidden');
-            setTimeout(() => {
-                modalContent.classList.remove('scale-95', 'opacity-0');
-                modalContent.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        };
-
-        const closeModal = () => {
-            modalContent.classList.remove('scale-100', 'opacity-100');
-            modalContent.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                appModal.classList.add('hidden');
-                crudForm.innerHTML = '';
-                notificationContent.classList.add('hidden');
-                confirmationContent.classList.add('hidden');
-            }, 300);
-        };
-
-        const showMessage = (title, message) => {
-            modalTitle.textContent = title;
-            notificationContent.textContent = message;
-            notificationContent.classList.remove('hidden');
-            showModal();
-        };
-
-        const showConfirmation = (message, onConfirm) => {
-            modalTitle.textContent = "Confirmar Acción";
-            confirmationMessage.textContent = message;
-            confirmationContent.classList.remove('hidden');
-            confirmBtn.onclick = () => {
-                onConfirm();
-                closeModal();
-            };
-            showModal();
-        };
-
-        // --- AUTHENTICATION ---
-        const verificarAutenticacion = () => {
-            if (loggedInUser) {
-                loginView.classList.add('hidden');
-                dashboardView.classList.remove('hidden');
-                userNameDisplay.textContent = `- Bienvenido ${loggedInUser.name}`;
-                cargarMedicamentos();
-                cargarStock();
-                cargarVentas();
-                cargarReportes();
-                cargarProveedores();
-            } else {
-                loginView.classList.remove('hidden');
-                dashboardView.classList.add('hidden');
-            }
-        };
-
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const dni = document.getElementById('dni').value;
-            const password = document.getElementById('password').value;
-
-            try {
-                // This fetch call is for real-world deployment. In this environment, it will fail and fall back to the mock logic.
-                const response = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ dni, password })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    loggedInUser = {
-                        name: data.nombre,
-                        id: data.id
-                    };
-                    errorMsg.textContent = '';
-                } else {
-                    errorMsg.textContent = 'Credenciales inválidas';
-                }
-            } catch (error) {
-                console.error('API call failed, using mock data:', error);
-                // Fallback to mock logic for this environment
-                if (dni && password) {
-                    loggedInUser = { name: `Usuario ${dni}`, id: 'mock-user-id' };
-                    errorMsg.textContent = '';
-                } else {
-                    errorMsg.textContent = 'Credenciales inválidas';
-                }
-            }
-            verificarAutenticacion();
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            loggedInUser = null;
-            verificarAutenticacion();
-        });
-
-        // --- DATA MANAGEMENT ---
-        async function cargarMedicamentos() {
-            try {
-                // Fetch de datos de medicamentos y proveedores
-                const response = await fetch(`${API_URL}/medicamentos?select=*,proveedores(nombre)`);
-                const meds = await response.json();
-                
-                // Fetch de datos de stock para calcular el total
-                const stockResponse = await fetch(`${API_URL}/stock?select=medicamento_id,cantidad`);
-                const stockData = await stockResponse.json();
-
-                const medicationStock = new Map();
-                stockData.forEach(s => {
-                    const currentStock = medicationStock.get(s.medicamento_id) || 0;
-                    medicationStock.set(s.medicamento_id, currentStock + s.cantidad);
-                });
-                
-                const tbody = document.querySelector("#medicationTableBody");
-                tbody.innerHTML = "";
-                
-                if (meds.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay medicamentos registrados.</td></tr>`;
-                    return;
-                }
-                
-                meds.forEach(m => {
-                    const totalStock = medicationStock.get(m.id) || 0;
-                    const row = document.createElement('tr');
-                    row.className = "transition-colors duration-200 hover:bg-gray-50";
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${m.nombre_comercial || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${m.presentacion || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${m.categoria || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${totalStock}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onclick="editMedication('${m.id}')" class="text-blue-600 hover:text-blue-900 transition-colors duration-200">✏️</button>
-                            <button onclick="deleteMedication('${m.id}')" class="text-red-600 hover:text-red-900 ml-2 transition-colors duration-200">🗑️</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error al cargar medicamentos desde la API:', error);
-                const tbody = document.querySelector("#medicationTableBody");
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar datos. ${error.message}</td></tr>`;
-            }
+        try {
+            await apiFetch('/ventas', { method: 'POST', body: JSON.stringify(ventaData) });
+            closeModal();
+            renderVentas();
+            renderLotes(); // El stock cambió, así que recargamos los lotes
+        } catch (error) {
+            alert(`Error al registrar venta: ${error.message}`);
         }
+    });
+}
 
-        async function cargarStock() {
-            try {
-                // Fetch de datos desde el endpoint de movimientos
-                const response = await fetch(`${API_URL}/movimientos?select=*,medicamentos(nombre_comercial)`);
-                const stock = await response.json();
-                
-                const tbody = document.querySelector("#stockTableBody");
-                tbody.innerHTML = "";
+// ============================================================================
+// 🔹 6. APP INITIALIZATION
+// ============================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    supabase.auth.onAuthStateChange((_event, session) => {
+        appState.session = session;
+        updateDashboard();
+    });
 
-                if (stock.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay movimientos de stock registrados.</td></tr>`;
-                    return;
-                }
+    loginForm.addEventListener('submit', handleLogin);
+    logoutBtn.addEventListener('click', handleLogout);
+    showRegisterBtn.addEventListener('click', showRegisterForm);
+    addLoteBtn.addEventListener('click', showLoteForm);
+    addSaleBtn.addEventListener('click', showSaleForm);
+});
+</script>
 
-                stock.forEach(s => {
-                    const medicationName = s.medicamentos ? s.medicamentos.nombre_comercial : 'N/A';
-                    const fechaVencimiento = new Date(s.fecha_movimiento).toLocaleDateString();
-                    
-                    const row = document.createElement('tr');
-                    row.className = `transition-colors duration-200 hover:bg-gray-50`;
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${medicationName}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${s.tipo}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${s.cantidad}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${s.lote || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${fechaVencimiento}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error al cargar stock desde la API:', error);
-                const tbody = document.querySelector("#stockTableBody");
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar datos. ${error.message}</td></tr>`;
-            }
-        }
-
-        async function cargarVentas() {
-            try {
-                const response = await fetch(`${API_URL}/ventas?select=*,clientes(nombre,apellido),usuarios(nombre,apellido)`);
-                const sales = await response.json();
-                
-                const tbody = document.querySelector("#salesTableBody");
-                tbody.innerHTML = "";
-
-                if (sales.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No hay ventas registradas.</td></tr>`;
-                    return;
-                }
-
-                sales.forEach(s => {
-                    const cliente = s.clientes ? `${s.clientes.nombre} ${s.clientes.apellido}` : 'Público General';
-                    const usuario = s.usuarios ? `${s.usuarios.nombre} ${s.usuarios.apellido}` : 'N/A';
-                    const fecha = new Date(s.fecha).toLocaleDateString();
-
-                    const row = document.createElement('tr');
-                    row.className = `transition-colors duration-200 hover:bg-gray-50`;
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${fecha}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${s.total.toFixed(2)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${cliente}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${usuario}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error al cargar ventas desde la API:', error);
-                const tbody = document.querySelector("#salesTableBody");
-                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error al cargar datos. ${error.message}</td></tr>`;
-            }
-        }
-        
-        async function cargarProveedores() {
-            try {
-                const response = await fetch(`${API_URL}/proveedores`);
-                const suppliers = await response.json();
-
-                const tbody = document.querySelector("#suppliersTableBody");
-                tbody.innerHTML = "";
-
-                if (suppliers.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay proveedores registrados.</td></tr>`;
-                    return;
-                }
-
-                suppliers.forEach(s => {
-                    const row = document.createElement('tr');
-                    row.className = "transition-colors duration-200 hover:bg-gray-50";
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${s.nombre || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${s.ruc || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${s.telefono || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${s.direccion || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onclick="editSupplier('${s.id}')" class="text-blue-600 hover:text-blue-900 transition-colors duration-200">✏️</button>
-                            <button onclick="deleteSupplier('${s.id}')" class="text-red-600 hover:text-red-900 ml-2 transition-colors duration-200">🗑️</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error al cargar proveedores desde la API:', error);
-                const tbody = document.querySelector("#suppliersTableBody");
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar datos. ${error.message}</td></tr>`;
-            }
-        }
-
-        async function cargarReportes() {
-            // Cargar Stock Bajo
-            try {
-                const response = await fetch(`${API_URL}/reportes/stock-bajo`);
-                const reportData = await response.json();
-                
-                stockBajoTableBody.innerHTML = '';
-                if (reportData.length === 0) {
-                    stockBajoTableBody.innerHTML = `<tr><td colspan="2" class="py-1 text-center text-gray-500">No hay stock bajo.</td></tr>`;
-                } else {
-                    reportData.forEach(med => {
-                        stockBajoTableBody.innerHTML += `
-                            <tr class="transition-colors duration-200 hover:bg-red-100">
-                                <td class="py-1">${med.medicamentos.nombre_comercial}</td>
-                                <td class="py-1">${med.cantidad}</td>
-                            </tr>
-                        `;
-                    });
-                }
-            } catch (error) {
-                console.error('Error al cargar reporte de stock bajo:', error);
-                stockBajoTableBody.innerHTML = `<tr><td colspan="2" class="py-1 text-center text-red-500">Error al cargar datos. ${error.message}</td></tr>`;
-            }
-            
-            // Cargar Ventas Diarias
-            try {
-                const response = await fetch(`${API_URL}/reportes/ventas-diarias?dias=7`);
-                const reportData = await response.json();
-                
-                ventasDiariasTableBody.innerHTML = '';
-                if (reportData.length === 0) {
-                    ventasDiariasTableBody.innerHTML = `<tr><td colspan="2" class="py-1 text-center text-gray-500">No hay ventas diarias.</td></tr>`;
-                } else {
-                    reportData.forEach(venta => {
-                        ventasDiariasTableBody.innerHTML += `
-                            <tr class="transition-colors duration-200 hover:bg-green-100">
-                                <td class="py-1">${new Date(venta.fecha).toLocaleDateString()}</td>
-                                <td class="py-1">${venta.total_diario.toFixed(2)}</td>
-                            </tr>
-                        `;
-                    });
-                }
-            } catch (error) {
-                console.error('Error al cargar reporte de ventas diarias:', error);
-                ventasDiariasTableBody.innerHTML = `<tr><td colspan="2" class="py-1 text-center text-red-500">Error al cargar datos. ${error.message}</td></tr>`;
-            }
-        }
-
-        async function mostrarFormularioMedicamento(id = null) {
-            modalTitle.textContent = id ? "Editar Medicamento" : "Nuevo Medicamento";
-            
-            // Fetch de proveedores
-            let supplierOptionsHtml = '<option value="">Seleccionar Proveedor</option>';
-            try {
-                const response = await fetch(`${API_URL}/proveedores`);
-                const suppliers = await response.json();
-                suppliers.forEach(supplier => {
-                    supplierOptionsHtml += `<option value="${supplier.id}">${supplier.nombre}</option>`;
-                });
-            } catch (error) {
-                console.error('Error al cargar proveedores:', error);
-                supplierOptionsHtml = `<option value="">Error al cargar</option>`;
-            }
-            
-            crudForm.innerHTML = `
-                <input type="text" id="nombre_comercial" placeholder="Nombre Comercial" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
-                <input type="text" id="nombre_generico" placeholder="Nombre Genérico" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">
-                <input type="text" id="presentacion" placeholder="Presentación" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
-                <input type="text" id="concentracion" placeholder="Concentración" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">
-                <input type="text" id="categoria" placeholder="Categoría" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">
-                <div class="flex items-center space-x-2">
-                    <input type="checkbox" id="requiere_receta" class="rounded text-blue-600">
-                    <label for="requiere_receta">Requiere Receta</label>
-                </div>
-                <select id="proveedor_id" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${supplierOptionsHtml}</select>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">${id ? 'Actualizar' : 'Crear'}</button>
-            `;
-            crudForm.onsubmit = (e) => {
-                e.preventDefault();
-                if (id) {
-                    actualizarMedicamento(id);
-                } else {
-                    crearMedicamento();
-                }
-            };
-            if (id) cargarDatosMedicamento(id);
-            showModal();
-        }
-
-        async function cargarDatosMedicamento(id) {
-            try {
-                const response = await fetch(`${API_URL}/medicamentos/${id}`);
-                const med = await response.json();
-                if (med && med.length > 0) {
-                    document.getElementById('nombre_comercial').value = med[0].nombre_comercial || '';
-                    document.getElementById('nombre_generico').value = med[0].nombre_generico || '';
-                    document.getElementById('presentacion').value = med[0].presentacion || '';
-                    document.getElementById('concentracion').value = med[0].concentracion || '';
-                    document.getElementById('categoria').value = med[0].categoria || '';
-                    document.getElementById('requiere_receta').checked = med[0].requiere_receta || false;
-                    document.getElementById('proveedor_id').value = med[0].proveedor_id || '';
-                } else {
-                    throw new Error('Medicamento no encontrado.');
-                }
-            } catch (error) {
-                console.error('Error al cargar datos del medicamento:', error);
-                showMessage('Error', `Error al cargar datos: ${error.message}`);
-            }
-        }
-
-        async function crearMedicamento() {
-            const newMedData = {
-                nombre_comercial: document.getElementById('nombre_comercial').value,
-                nombre_generico: document.getElementById('nombre_generico').value,
-                presentacion: document.getElementById('presentacion').value,
-                concentracion: document.getElementById('concentracion').value,
-                categoria: document.getElementById('categoria').value,
-                requiere_receta: document.getElementById('requiere_receta').checked,
-                proveedor_id: document.getElementById('proveedor_id').value,
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/medicamentos`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newMedData)
-                });
-                if (!response.ok) throw new Error(await response.text());
-
-                closeModal();
-                cargarMedicamentos();
-                showMessage('Éxito', 'Medicamento creado exitosamente.');
-            } catch (error) {
-                console.error('Error al crear medicamento:', error);
-                showMessage('Error', `Error al crear medicamento: ${error.message}`);
-            }
-        }
-
-        async function actualizarMedicamento(id) {
-            const updatedMedData = {
-                nombre_comercial: document.getElementById('nombre_comercial').value,
-                nombre_generico: document.getElementById('nombre_generico').value,
-                presentacion: document.getElementById('presentacion').value,
-                concentracion: document.getElementById('concentracion').value,
-                categoria: document.getElementById('categoria').value,
-                requiere_receta: document.getElementById('requiere_receta').checked,
-                proveedor_id: document.getElementById('proveedor_id').value,
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/medicamentos/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedMedData)
-                });
-                if (!response.ok) throw new Error(await response.text());
-                
-                closeModal();
-                cargarMedicamentos();
-                showMessage('Éxito', 'Medicamento actualizado exitosamente.');
-            } catch (error) {
-                console.error('Error al actualizar medicamento:', error);
-                showMessage('Error', `Error al actualizar medicamento: ${error.message}`);
-            }
-        }
-
-        function editarMedicamento(id) {
-            mostrarFormularioMedicamento(id);
-        }
-
-        function eliminarMedicamento(id) {
-            showConfirmation('¿Estás seguro de que quieres eliminar este medicamento?', async () => {
-                try {
-                    const response = await fetch(`${API_URL}/medicamentos/${id}`, { method: 'DELETE' });
-                    if (!response.ok) throw new Error(await response.text());
-                    
-                    cargarMedicamentos();
-                    showMessage('Éxito', 'Medicamento eliminado exitosamente.');
-                } catch (error) {
-                    console.error('Error al eliminar medicamento:', error);
-                    showMessage('Error', `Error al eliminar medicamento: ${error.message}`);
-                }
-            });
-        }
-
-        async function mostrarFormularioMovimiento() {
-            modalTitle.textContent = "Registrar Movimiento de Stock";
-            
-            let optionsHtml = '<option value="">Seleccionar Medicamento</option>';
-            try {
-                const response = await fetch(`${API_URL}/medicamentos`);
-                const meds = await response.json();
-                meds.forEach(med => {
-                    optionsHtml += `<option value="${med.id}">${med.nombre_comercial} - ${med.presentacion}</option>`;
-                });
-            } catch (error) {
-                console.error('Error al cargar medicamentos:', error);
-                optionsHtml = `<option value="">Error al cargar</option>`;
-            }
-            
-            crudForm.innerHTML = `
-                <select id="medicamento_id" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${optionsHtml}</select>
-                <select id="tipo" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
-                    <option value="INGRESO">Ingreso</option>
-                    <option value="SALIDA">Salida</option>
-                </select>
-                <input type="number" id="cantidad" placeholder="Cantidad" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required min="1">
-                <input type="text" id="lote" placeholder="Lote" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
-                <input type="date" id="fecha_vencimiento" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
-                <textarea id="motivo" placeholder="Motivo/Observaciones" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500 h-24 resize-y"></textarea>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">Registrar Movimiento</button>
-            `;
-            crudForm.onsubmit = (e) => {
-                e.preventDefault();
-                registrarMovimiento();
-            };
-            showModal();
-        }
-
-        async function registrarMovimiento() {
-            const medicationId = document.getElementById('medicamento_id').value;
-            const type = document.getElementById('tipo').value;
-            const quantity = parseInt(document.getElementById('cantidad').value);
-            const lote = document.getElementById('lote').value;
-            const fechaVencimiento = document.getElementById('fecha_vencimiento').value;
-
-            // Validar si es una salida y si hay stock suficiente
-            if (type === 'SALIDA') {
-                try {
-                    const stockResponse = await fetch(`${API_URL}/stock/medicamento/${medicationId}`);
-                    const stockData = await stockResponse.json();
-                    const totalStock = stockData.reduce((sum, s) => sum + s.cantidad, 0);
-                    if (totalStock < quantity) {
-                        showMessage('Error', `Stock insuficiente. Disponible: ${totalStock}`);
-                        return;
-                    }
-                } catch (error) {
-                    console.error('Error al validar stock:', error);
-                    showMessage('Error', `Error al validar stock: ${error.message}`);
-                    return;
-                }
-            }
-
-            const movementData = {
-                medicamento_id: medicationId,
-                tipo: type,
-                cantidad: quantity,
-                lote: lote,
-                fecha_vencimiento: fechaVencimiento,
-                motivo: document.getElementById('motivo').value,
-                fecha_movimiento: new Date().toISOString(),
-                usuario: loggedInUser.id,
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/movimientos`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(movementData)
-                });
-                if (!response.ok) throw new Error(await response.text());
-                
-                closeModal();
-                cargarStock();
-                cargarMedicamentos();
-                showMessage('Éxito', 'Movimiento registrado exitosamente.');
-            } catch (error) {
-                console.error('Error al registrar movimiento:', error);
-                showMessage('Error', `Error al registrar movimiento: ${error.message}`);
-            }
-        }
-
-        async function mostrarFormularioVenta() {
-            modalTitle.textContent = "Registrar Nueva Venta";
-            
-            let stockOptionsHtml = '<option value="">Seleccionar Producto</option>';
-            // Fetch stock data
-            try {
-                const stockResponse = await fetch(`${API_URL}/stock?select=id,medicamento_id,precio_unitario,lote,medicamentos(nombre_comercial,presentacion)`);
-                const stockData = await stockResponse.json();
-                stockData.forEach(s => {
-                    const medication = s.medicamentos;
-                    if (medication) {
-                        stockOptionsHtml += `<option value="${s.id}" data-precio="${s.precio_unitario}">${medication.nombre_comercial} - ${medication.presentacion} (Lote: ${s.lote})</option>`;
-                    }
-                });
-            } catch (error) {
-                console.error('Error al cargar stock:', error);
-                stockOptionsHtml = `<option value="">Error al cargar</option>`;
-            }
-
-            let clientOptionsHtml = '<option value="">Seleccionar Cliente</option>';
-            // Fetch client data
-            try {
-                const response = await fetch(`${API_URL}/clientes`);
-                const clients = await response.json();
-                clients.forEach(client => {
-                    clientOptionsHtml += `<option value="${client.id}">${client.nombre} ${client.apellido}</option>`;
-                });
-            } catch (error) {
-                console.error('Error al cargar clientes:', error);
-                clientOptionsHtml = `<option value="">Error al cargar</option>`;
-            }
-
-            crudForm.innerHTML = `
-                <div class="flex flex-col space-y-2">
-                    <label for="venta_cliente_id" class="text-sm font-semibold">Cliente:</label>
-                    <select id="venta_cliente_id" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">${clientOptionsHtml}</select>
-                </div>
-                <h4 class="text-lg font-semibold mt-4">Detalle de la Venta</h4>
-                <div id="ventaItems" class="space-y-4">
-                    <!-- Item 1 -->
-                    <div class="venta-item flex space-x-2">
-                        <select class="item-stock-id w-1/2 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${stockOptionsHtml}</select>
-                        <input type="number" class="item-cantidad w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Cant." required min="1">
-                        <input type="number" class="item-precio w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Precio" required step="0.01" readonly>
-                    </div>
-                </div>
-                <button type="button" onclick="agregarItemVenta()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg mt-2 transition-colors duration-200">
-                    ➕ Añadir Item
-                </button>
-                <div class="text-right font-bold text-xl mt-4">Total: <span id="ventaTotal">$0.00</span></div>
-                <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 mt-4">Registrar Venta</button>
-            `;
-
-            crudForm.querySelectorAll('.item-stock-id').forEach(select => {
-                select.addEventListener('change', (e) => {
-                    const selectedOption = e.target.options[e.target.selectedIndex];
-                    const precioInput = e.target.closest('.venta-item').querySelector('.item-precio');
-                    precioInput.value = selectedOption.dataset.precio || '';
-                    actualizarTotalVenta();
-                });
-            });
-
-            crudForm.querySelectorAll('.item-cantidad').forEach(input => {
-                input.addEventListener('input', actualizarTotalVenta);
-            });
-
-            crudForm.onsubmit = (e) => {
-                e.preventDefault();
-                registrarVenta();
-            };
-            
-            showModal();
-        }
-
-        function agregarItemVenta() {
-            const container = document.getElementById('ventaItems');
-            const stockOptionsHtml = document.querySelector('.item-stock-id').innerHTML;
-            const newItemHtml = `
-                <div class="venta-item flex space-x-2 mt-2">
-                    <select class="item-stock-id w-1/2 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>${stockOptionsHtml}</select>
-                    <input type="number" class="item-cantidad w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Cant." required min="1">
-                    <input type="number" class="item-precio w-1/4 px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Precio" required step="0.01" readonly>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', newItemHtml);
-
-            const newSelect = container.lastElementChild.querySelector('.item-stock-id');
-            const newQuantityInput = container.lastElementChild.querySelector('.item-cantidad');
-            
-            newSelect.addEventListener('change', (e) => {
-                const selectedOption = e.target.options[e.target.selectedIndex];
-                const precioInput = e.target.closest('.venta-item').querySelector('.item-precio');
-                precioInput.value = selectedOption.dataset.precio || '';
-                actualizarTotalVenta();
-            });
-
-            newQuantityInput.addEventListener('input', actualizarTotalVenta);
-        }
-        
-        function actualizarTotalVenta() {
-            let total = 0;
-            const items = document.querySelectorAll('.venta-item');
-            items.forEach(itemDiv => {
-                const cantidad = parseFloat(itemDiv.querySelector('.item-cantidad').value) || 0;
-                const precio = parseFloat(itemDiv.querySelector('.item-precio').value) || 0;
-                total += cantidad * precio;
-            });
-            document.getElementById('ventaTotal').textContent = `$${total.toFixed(2)}`;
-        }
-
-        async function registrarVenta() {
-            const clienteId = document.getElementById('venta_cliente_id').value;
-            const items = Array.from(document.querySelectorAll('.venta-item')).map(itemDiv => {
-                const stockId = itemDiv.querySelector('.item-stock-id').value;
-                const cantidad = parseInt(itemDiv.querySelector('.item-cantidad').value);
-                const precioUnitario = parseFloat(itemDiv.querySelector('.item-precio').value);
-                return {
-                    stock_id: stockId,
-                    cantidad: cantidad,
-                    precio_unitario: precioUnitario
-                };
-            });
-
-            if (items.some(item => !item.stock_id || isNaN(item.cantidad) || item.cantidad <= 0 || isNaN(item.precio_unitario) || item.precio_unitario <= 0)) {
-                showMessage('Error', 'Por favor, complete todos los campos de los items de la venta con valores válidos.');
-                return;
-            }
-
-            const ventaData = {
-                usuarioId: loggedInUser.id,
-                clienteId: clienteId || null,
-                items: items
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/ventas`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(ventaData)
-                });
-                
-                if (response.ok) {
-                    closeModal();
-                    cargarVentas(); // Recarga los datos desde la API
-                    showMessage('Éxito', 'Venta registrada exitosamente.');
-                } else {
-                    const errorText = await response.text();
-                    showMessage('Error', `Error al registrar venta: ${errorText}`);
-                }
-            } catch (error) {
-                console.error('Error al conectar con la API:', error);
-                showMessage('Éxito (Simulado)', 'Venta registrada localmente. No se pudo conectar a la API.');
-            }
-        }
-        
-        async function mostrarFormularioProveedor(id = null) {
-            modalTitle.textContent = id ? "Editar Proveedor" : "Nuevo Proveedor";
-            crudForm.innerHTML = `
-                <input type="text" id="nombre_proveedor" placeholder="Nombre" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500" required>
-                <input type="text" id="ruc_proveedor" placeholder="RUC" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">
-                <input type="text" id="telefono_proveedor" placeholder="Teléfono" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">
-                <input type="text" id="direccion_proveedor" placeholder="Dirección" class="w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:border-blue-500">
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">${id ? 'Actualizar' : 'Crear'}</button>
-            `;
-            crudForm.onsubmit = (e) => {
-                e.preventDefault();
-                if (id) {
-                    // Lógica para actualizar proveedor
-                } else {
-                    registrarProveedor();
-                }
-            };
-            showModal();
-        }
-
-        async function registrarProveedor() {
-            const newSupplierData = {
-                nombre: document.getElementById('nombre_proveedor').value,
-                ruc: document.getElementById('ruc_proveedor').value,
-                telefono: document.getElementById('telefono_proveedor').value,
-                direccion: document.getElementById('direccion_proveedor').value,
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/proveedores`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newSupplierData)
-                });
-                if (!response.ok) throw new Error(await response.text());
-
-                closeModal();
-                cargarMedicamentos(); // Recargar la lista para que el nuevo proveedor aparezca en el select
-                cargarProveedores();
-                showMessage('Éxito', 'Proveedor creado exitosamente.');
-            } catch (error) {
-                console.error('Error al crear proveedor:', error);
-                showMessage('Error', `Error al crear proveedor: ${error.message}`);
-            }
-        }
-
-        // Global functions to be called from HTML onclick attributes
-        window.editMedication = editarMedicamento;
-        window.deleteMedication = eliminarMedicamento;
-        window.mostrarFormularioMedicamento = mostrarFormularioMedicamento;
-        window.mostrarFormularioMovimiento = mostrarFormularioMovimiento;
-        window.mostrarFormularioVenta = mostrarFormularioVenta;
-        window.closeModal = closeModal;
-        window.agregarItemVenta = agregarItemVenta;
-        window.mostrarFormularioProveedor = mostrarFormularioProveedor;
-        window.editSupplier = editSupplier;
-        window.deleteSupplier = deleteSupplier;
-        
-        async function editSupplier(id) {
-            // Lógica para editar proveedor
-            console.log(`Editando proveedor con ID: ${id}`);
-        }
-        
-        async function deleteSupplier(id) {
-            showConfirmation('¿Estás seguro de que quieres eliminar este proveedor?', async () => {
-                try {
-                    const response = await fetch(`${API_URL}/proveedores/${id}`, { method: 'DELETE' });
-                    if (!response.ok) throw new Error(await response.text());
-                    
-                    cargarProveedores();
-                    showMessage('Éxito', 'Proveedor eliminado exitosamente.');
-                } catch (error) {
-                    console.error('Error al eliminar proveedor:', error);
-                    showMessage('Error', `Error al eliminar proveedor: ${error.message}`);
-                }
-            });
-        }
-
-        // Event Listeners
-        addMedicationBtn.addEventListener('click', () => mostrarFormularioMedicamento());
-        addStockMovementBtn.addEventListener('click', () => mostrarFormularioMovimiento());
-        addSaleBtn.addEventListener('click', () => mostrarFormularioVenta());
-        
-        // Initial check
-        verificarAutenticacion();
-    </script>
 </body>
 </html>
