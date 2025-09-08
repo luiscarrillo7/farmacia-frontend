@@ -317,9 +317,9 @@ async function showSaleForm() {
                 usuarioId: appState.session.user.id,
                 clienteId: e.target.elements.clienteId.value || null,
                 items: Array.from(document.querySelectorAll('.venta-item')).map(div => ({
-                    medicamentoId: parseInt(div.querySelector('.item-medicamento-id').value),
-                    cantidad: parseInt(div.querySelector('.item-cantidad').value),
-                    precioUnitario: parseFloat(div.querySelector('.item-precio').value)
+                medicamentoId: parseInt(div.querySelector('.item-medicamento-id').value),
+                cantidad: parseInt(div.querySelector('.item-cantidad').value)
+                // El precio ya no se envía, el backend lo calcula
                 }))
             };
             try {
