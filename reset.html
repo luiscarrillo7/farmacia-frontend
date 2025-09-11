@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Restablecer Contraseña</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full">
+        <h2 class="text-3xl font-bold text-center text-blue-800 mb-6">Nueva Contraseña</h2>
+        <p id="message" class="text-center mb-4"></p>
+        <form id="resetPasswordForm" class="space-y-4 hidden">
+            <input type="password" id="newPassword" placeholder="Escribe tu nueva contraseña" class="w-full px-4 py-2 border-2 rounded-lg" required>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Guardar Contraseña</button>
+        </form>
+    </div>
+
+<script>
+    // --- CONFIGURACIÓN ---
+    const SUPABASE_URL = 'https://ccfgclymyeciqbgrdfuf.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZmdjbHlteWVjaXFiZ3JkZnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4NTcwODQsImV4cCI6MjA3MjQzMzA4NH0.hN5kiIxFa4FAzsI4UWJGcKQyTTu30dk6M6ybN-PQ2GM';
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // --- LÓGICA ---
+    const resetForm = document.getElementById('resetPasswordForm');
+    const messageEl = document.getElementById('message');
+
+    // Escucha el evento de login por "magic link"
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        // Este evento se dispara cuando el usuario llega desde el link del email
+        if (event === 'SIGNED_IN' && session) {
+            messageEl.textContent = 'Estás conectado. Ahora puedes establecer tu nueva contraseña.';
+            resetForm.classList.remove('hidden');
+        }
+    });
+
+    resetForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newPassword = document.getElementById('newPassword').value;
+
+        // Verifica que la contraseña no esté vacía
+        if (!newPassword || newPassword.length < 6) {
+            messageEl.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+            messageEl.classList.add('text-red-500');
+            return;
+        }
+
+        // Usa la función de Supabase para actualizar el usuario
+        const { data, error } = await supabaseClient.auth.updateUser({
+            password: newPassword
+        });
+
+        if (error) {
+            messageEl.textContent = `Error: ${error.message}`;
+            messageEl.classList.add('text-red-500');
+        } else {
+            resetForm.classList.add('hidden');
+            messageEl.textContent = '¡Contraseña actualizada con éxito! Ya puedes cerrar esta ventana e iniciar sesión con tu nueva contraseña.';
+            messageEl.classList.remove('text-red-500');
+            messageEl.classList.add('text-green-500');
+        }
+    });
+</script>
+
+</body>
+</html>
