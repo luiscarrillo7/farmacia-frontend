@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <title>Sistema de Ventas - Corregido</title>
+    <title>Sistema de Ventas v3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -40,16 +40,10 @@
     <div id="saleModal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-blue-700">Registrar Venta</h3>
+                <h3 id="modalTitle" class="text-2xl font-bold text-blue-700"></h3>
                 <button onclick="closeModal()" class="text-gray-500 text-3xl hover:text-gray-800">&times;</button>
             </div>
-            <form id="saleForm" class="space-y-4">
-                <input type="text" name="clienteId" placeholder="ID del Cliente (opcional)" class="w-full p-2 border rounded">
-                <div id="saleItemsContainer" class="space-y-2 border-t pt-4">
-                    </div>
-                <button type="button" id="addItemBtn" class="bg-gray-200 p-2 rounded">➕ Añadir Producto</button>
-                <button type="submit" class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-4">Confirmar Venta</button>
-            </form>
+            <div id="modalBody"></div>
         </div>
     </div>
 
@@ -70,37 +64,27 @@
     const logoutBtn = document.getElementById('logoutBtn');
     const showSaleModalBtn = document.getElementById('showSaleModalBtn');
     const saleModal = document.getElementById('saleModal');
-    const saleForm = document.getElementById('saleForm');
-    const itemsContainer = document.getElementById('saleItemsContainer');
-    const addItemBtn = document.getElementById('addItemBtn');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
 
     // --- 3. FUNCIONES ---
-    const showDashboard = (session) => {
-        currentUserSession = session;
-        loginView.classList.add('hidden');
-        dashboardView.classList.remove('hidden');
-    };
-
-    const showLoginView = () => {
-        currentUserSession = null;
-        loginView.classList.remove('hidden');
-        dashboardView.classList.add('hidden');
-    };
-
+    const showDashboard = (session) => { currentUserSession = session; loginView.classList.add('hidden'); dashboardView.classList.remove('hidden'); };
+    const showLoginView = () => { currentUserSession = null; loginView.classList.remove('hidden'); dashboardView.classList.add('hidden'); };
     const openModal = () => saleModal.classList.remove('hidden');
     const closeModal = () => saleModal.classList.add('hidden');
     window.closeModal = closeModal;
 
-    const addItem = () => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'sale-item flex gap-2';
-        itemDiv.innerHTML = `
-            <input type="number" name="medicamentoId" placeholder="ID Medicamento" class="w-1/2 p-2 border rounded" required>
-            <input type="number" name="cantidad" placeholder="Cantidad" class="w-1/2 p-2 border rounded" min="1" required>
-        `;
-        itemsContainer.appendChild(itemDiv);
+    const showFormModal = (title, formHtml, onSubmitCallback) => {
+        modalTitle.textContent = title;
+        const form = document.createElement('form');
+        form.className = 'space-y-4';
+        form.innerHTML = formHtml;
+        form.onsubmit = (e) => { e.preventDefault(); onSubmitCallback(e); };
+        modalBody.innerHTML = '';
+        modalBody.appendChild(form);
+        openModal();
     };
-
+    
     // --- 4. LÓGICA DE EVENTOS ---
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -120,61 +104,110 @@
         showLoginView();
     });
 
-    showSaleModalBtn.addEventListener('click', () => {
-        itemsContainer.innerHTML = ''; // Limpiar items anteriores
-        addItem(); // Añadir el primer item por defecto
-        openModal();
-    });
-
-    addItemBtn.addEventListener('click', addItem);
-
-    saleForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!currentUserSession) {
-            alert("Error: No hay una sesión activa.");
-            return;
-        }
-
-        const formData = new FormData(saleForm);
-        const clienteId = formData.get('clienteId');
-        
-        const items = Array.from(document.querySelectorAll('.sale-item')).map(div => ({
-            medicamento_id: parseInt(div.querySelector('[name="medicamentoId"]').value),
-            cantidad: parseInt(div.querySelector('[name="cantidad"]').value)
-        }));
-
-        const ventaData = {
-            usuarioId: currentUserSession.user.id,
-            clienteId: clienteId ? parseInt(clienteId) : null,
-            items: items
-        };
-
+    showSaleModalBtn.addEventListener('click', async () => {
         try {
-            const response = await fetch(`${API_URL}/ventas`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentUserSession.access_token}`
-                },
-                body: JSON.stringify(ventaData)
-            });
+            // Paso 1: Llamar a la API para obtener los datos necesarios
+            const [medicamentos, clientes] = await Promise.all([
+                fetch(`${API_URL}/medicamentos`, { headers: { 'Authorization': `Bearer ${currentUserSession.access_token}` } }).then(res => res.json()),
+                fetch(`${API_URL}/clientes`, { headers: { 'Authorization': `Bearer ${currentUserSession.access_token}` } }).then(res => res.json())
+            ]);
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                const errorDetail = JSON.parse(result.detail);
-                throw new Error(errorDetail.message || 'Error desconocido del servidor.');
+            if (!medicamentos || medicamentos.length === 0) {
+                alert("No hay medicamentos disponibles para la venta.");
+                return;
             }
 
-            alert(`Venta registrada con éxito! ID: ${result.venta_id}, Total: $${result.total_calculado}`);
-            closeModal();
+            // Paso 2: Construir las opciones para los <select>
+            const medOptions = medicamentos.map(m => `<option value="${m.id}" data-precio="${m.precio_venta}">${m.nombre} (${m.presentacion})</option>`).join('');
+            const clientOptions = clientes.map(c => `<option value="${c.id}">${c.nombre} ${c.apellido}</option>`).join('');
+
+            const formHtml = `
+                <select name="clienteId" class="w-full p-2 border rounded">
+                    <option value="">Público General</option>
+                    ${clientOptions}
+                </select>
+                <div id="saleItemsContainer" class="space-y-2 border-t pt-4"></div>
+                <button type="button" id="addItemBtn" class="bg-gray-200 p-2 rounded">➕ Añadir Producto</button>
+                <button type="submit" class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-4">Confirmar Venta</button>
+            `;
+            
+            const onSubmit = async (e) => {
+                const formData = new FormData(e.target);
+                const clienteId = formData.get('clienteId');
+                const items = Array.from(document.querySelectorAll('.sale-item')).map(div => ({
+                    medicamento_id: parseInt(div.querySelector('[name=medicamentoId]').value),
+                    cantidad: parseInt(div.querySelector('[name=cantidad]').value)
+                }));
+
+                const ventaData = {
+                    usuarioId: currentUserSession.user.id,
+                    clienteId: clienteId ? parseInt(clienteId) : null,
+                    items: items
+                };
+
+                try {
+                    const response = await fetch(`${API_URL}/ventas`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUserSession.access_token}` },
+                        body: JSON.stringify(ventaData)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        const errorDetail = JSON.parse(result.detail);
+                        throw new Error(errorDetail.message || 'Error desconocido.');
+                    }
+                    alert(`Venta registrada con éxito! ID: ${result.venta_id}, Total: $${result.total_calculado}`);
+                    closeModal();
+                } catch (error) {
+                    alert(`Error al registrar la venta: ${error.message}`);
+                }
+            };
+
+            showFormModal("Registrar Venta", formHtml, onSubmit);
+
+            // Lógica para el formulario dinámico
+            const itemsContainer = document.getElementById('saleItemsContainer');
+            const addItemBtn = document.getElementById('addItemBtn');
+            
+            const addItem = () => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'sale-item flex gap-2 items-center mt-2';
+                itemDiv.innerHTML = `
+                    <select name="medicamentoId" class="w-full p-2 border rounded" required>${medOptions}</select>
+                    <input type="number" name="cantidad" placeholder="Cantidad" class="w-auto p-2 border rounded" min="1" required value="1">
+                    <input type="text" name="precio" class="w-24 p-2 border rounded bg-gray-100" readonly>
+                    <button type="button" class="remove-item text-red-500 font-bold">X</button>
+                `;
+                itemsContainer.appendChild(itemDiv);
+                updatePrice(itemDiv.querySelector('[name=medicamentoId]'));
+            };
+            
+            const updatePrice = (selectElement) => {
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                const priceInput = selectElement.parentElement.querySelector('[name=precio]');
+                priceInput.value = `$${parseFloat(selectedOption.dataset.precio || 0).toFixed(2)}`;
+            };
+
+            itemsContainer.addEventListener('change', (e) => {
+                if(e.target && e.target.name === 'medicamentoId') {
+                    updatePrice(e.target);
+                }
+            });
+
+            itemsContainer.addEventListener('click', (e) => {
+                if(e.target && e.target.classList.contains('remove-item')) {
+                    e.target.parentElement.remove();
+                }
+            });
+
+            addItem();
+            addItemBtn.addEventListener('click', addItem);
         } catch (error) {
-            alert(`Error al registrar la venta: ${error.message}`);
+            alert(`Error al preparar formulario: ${error.message}`);
         }
     });
 
     // --- 5. INICIALIZACIÓN ---
-    // Escuchar cambios de sesión para mostrar la vista correcta al cargar la página
     supabaseClient.auth.onAuthStateChange((_event, session) => {
         if (session) {
             showDashboard(session);
