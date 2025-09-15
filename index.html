@@ -4,66 +4,181 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <title>Prueba de Login</title>
+    <title>Sistema de Ventas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100">
 
-    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full">
-        <h2 class="text-3xl font-bold text-center text-blue-800 mb-6">Prueba de Login</h2>
-        <form id="loginForm" class="space-y-4">
-            <input type="email" id="email" placeholder="Correo Electrónico" class="w-full px-4 py-2 border-2 rounded-lg" required>
-            <input type="password" id="password" placeholder="Contraseña" class="w-full px-4 py-2 border-2 rounded-lg" required>
-            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Ingresar</button>
-        </form>
-        <div id="message" class="text-center font-bold mt-4"></div>
+    <div id="loginView" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full">
+            <h2 class="text-3xl font-bold text-center text-blue-800 mb-6">Ingreso al Sistema</h2>
+            <form id="loginForm" class="space-y-4">
+                <input type="email" id="email" placeholder="Correo Electrónico" class="w-full px-4 py-2 border-2 rounded-lg" required>
+                <input type="password" id="password" placeholder="Contraseña" class="w-full px-4 py-2 border-2 rounded-lg" required>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Ingresar</button>
+            </form>
+            <div id="loginMessage" class="text-center font-bold mt-4"></div>
+        </div>
+    </div>
+
+    <div id="dashboardView" class="hidden">
+        <header class="bg-blue-800 text-white p-4 shadow-lg flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Bienvenido</h1>
+            <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 font-semibold py-2 px-4 rounded-lg">Salir</button>
+        </header>
+        <main class="p-8 text-center">
+            <button id="showSaleModalBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-xl">
+                🛒 Registrar Nueva Venta
+            </button>
+        </main>
+    </div>
+
+    <div id="saleModal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-blue-700">Registrar Venta</h3>
+                <button onclick="closeModal()" class="text-gray-500 text-3xl hover:text-gray-800">&times;</button>
+            </div>
+            <form id="saleForm" class="space-y-4">
+                <p class="text-sm text-gray-600">Introduce los IDs directamente para esta prueba.</p>
+                <input type="text" name="clienteId" placeholder="ID del Cliente (opcional)" class="w-full p-2 border rounded">
+                <div id="saleItemsContainer" class="space-y-2 border-t pt-4">
+                    </div>
+                <button type="button" id="addItemBtn" class="bg-gray-200 p-2 rounded">➕ Añadir Producto</button>
+                <button type="submit" class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-4">Confirmar Venta</button>
+            </form>
+        </div>
     </div>
 
 <script>
-    // 1. --- CONFIGURACIÓN ---
-    // ⚠️ Reemplaza con tus propias credenciales de Supabase
+    // --- 1. CONFIGURACIÓN ---
     const SUPABASE_URL = 'https://ccfgclymyeciqbgrdfuf.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZmdjbHlteWVjaXFiZ3JkZnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4NTcwODQsImV4cCI6MjA3MjQzMzA4NH0.hN5kiIxFa4FAzsI4UWJGcKQyTTu30dk6M6ybN-PQ2GM';
-const API_URL = 'https://farmacia-269414280318.europe-west1.run.app';
+    const API_URL = 'https://farmacia-269414280318.europe-west1.run.app';
 
-    // CORRECCIÓN: Usar 'supabaseClient' para evitar el conflicto de nombres
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentUserSession = null;
 
-    // --- ELEMENTOS DEL DOM ---
+    // --- 2. ELEMENTOS DEL DOM ---
+    const loginView = document.getElementById('loginView');
+    const dashboardView = document.getElementById('dashboardView');
     const loginForm = document.getElementById('loginForm');
-    const messageDiv = document.getElementById('message');
+    const loginMessageDiv = document.getElementById('loginMessage');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const showSaleModalBtn = document.getElementById('showSaleModalBtn');
+    const saleModal = document.getElementById('saleModal');
+    const saleForm = document.getElementById('saleForm');
+    const itemsContainer = document.getElementById('saleItemsContainer');
+    const addItemBtn = document.getElementById('addItemBtn');
 
-    // --- LÓGICA DEL LOGIN ---
+    // --- 3. FUNCIONES ---
+    const showDashboard = (session) => {
+        currentUserSession = session;
+        loginView.classList.add('hidden');
+        dashboardView.classList.remove('hidden');
+    };
+
+    const showLoginView = () => {
+        currentUserSession = null;
+        loginView.classList.remove('hidden');
+        dashboardView.classList.add('hidden');
+    };
+
+    const openModal = () => saleModal.classList.remove('hidden');
+    const closeModal = () => saleModal.classList.add('hidden');
+    window.closeModal = closeModal; // Para el botón 'x'
+
+    const addItem = () => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'sale-item flex gap-2';
+        itemDiv.innerHTML = `
+            <input type="number" name="medicamentoId" placeholder="ID Medicamento" class="w-1/2 p-2 border rounded" required>
+            <input type="number" name="cantidad" placeholder="Cantidad" class="w-1/2 p-2 border rounded" min="1" required>
+        `;
+        itemsContainer.appendChild(itemDiv);
+    };
+
+    // --- 4. LÓGICA DE EVENTOS ---
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        messageDiv.textContent = 'Procesando...';
-        messageDiv.className = 'text-center font-bold mt-4 text-gray-500';
-
+        loginMessageDiv.textContent = 'Procesando...';
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-
-        // Intentar iniciar sesión con Supabase
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
-
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
-            // Si hay un error, mostrarlo en rojo
-            messageDiv.textContent = `Error: ${error.message}`;
-            messageDiv.classList.remove('text-gray-500');
-            messageDiv.classList.add('text-red-500');
-            console.error(error);
+            loginMessageDiv.textContent = `Error: Credenciales incorrectas.`;
+        }
+        // onAuthStateChange se encargará del resto
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+        await supabaseClient.auth.signOut();
+    });
+
+    showSaleModalBtn.addEventListener('click', () => {
+        itemsContainer.innerHTML = ''; // Limpiar items anteriores
+        addItem(); // Añadir el primer item por defecto
+        openModal();
+    });
+
+    addItemBtn.addEventListener('click', addItem);
+
+    saleForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentUserSession) {
+            alert("Error: No hay una sesión activa.");
+            return;
+        }
+
+        const formData = new FormData(saleForm);
+        const clienteId = formData.get('clienteId');
+        
+        const items = Array.from(document.querySelectorAll('.sale-item')).map(item => ({
+            medicamentoId: parseInt(item.querySelector('[name=medicamentoId]').value),
+            cantidad: parseInt(item.querySelector('[name=cantidad]').value)
+        }));
+
+        const ventaData = {
+            usuarioId: currentUserSession.user.id,
+            clienteId: clienteId ? parseInt(clienteId) : null,
+            items: items
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/ventas`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentUserSession.access_token}`
+                },
+                body: JSON.stringify(ventaData)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                // Si la respuesta no es OK, extrae el mensaje de error del detalle
+                const errorDetail = JSON.parse(result.detail);
+                throw new Error(errorDetail.message || 'Error desconocido del servidor.');
+            }
+
+            alert(`Venta registrada con éxito! ID de Venta: ${result.venta_id}, Total: $${result.total_calculado}`);
+            closeModal();
+        } catch (error) {
+            alert(`Error al registrar la venta: ${error.message}`);
+        }
+    });
+
+    // --- 5. INICIALIZACIÓN ---
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+        if (session) {
+            showDashboard(session);
         } else {
-            // Si el login es exitoso, mostrar mensaje de éxito en verde
-            messageDiv.textContent = '✅ ¡Login Exitoso!';
-            messageDiv.classList.remove('text-gray-500');
-            messageDiv.classList.add('text-green-500');
-            console.log(data);
+            showLoginView();
         }
     });
 </script>
