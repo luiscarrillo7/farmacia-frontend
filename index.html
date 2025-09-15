@@ -90,7 +90,7 @@
 
     const openModal = () => saleModal.classList.remove('hidden');
     const closeModal = () => saleModal.classList.add('hidden');
-    window.closeModal = closeModal; // Para el botón 'x'
+    window.closeModal = closeModal;
 
     const addItem = () => {
         const itemDiv = document.createElement('div');
@@ -111,12 +111,14 @@
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
             loginMessageDiv.textContent = `Error: Credenciales incorrectas.`;
+        } else {
+            showDashboard(data.session);
         }
-        // onAuthStateChange se encargará del resto
     });
 
     logoutBtn.addEventListener('click', async () => {
         await supabaseClient.auth.signOut();
+        showLoginView();
     });
 
     showSaleModalBtn.addEventListener('click', () => {
@@ -137,9 +139,9 @@
         const formData = new FormData(saleForm);
         const clienteId = formData.get('clienteId');
         
-        const items = Array.from(document.querySelectorAll('.sale-item')).map(item => ({
-            medicamentoId: parseInt(item.querySelector('[name=medicamentoId]').value),
-            cantidad: parseInt(item.querySelector('[name=cantidad]').value)
+        const items = Array.from(document.querySelectorAll('.sale-item')).map(div => ({
+            medicamento_id: parseInt(div.querySelector('[name="medicamentoId"]').value), // <-- CORRECCIÓN AQUÍ
+            cantidad: parseInt(div.querySelector('[name="cantidad"]').value)
         }));
 
         const ventaData = {
@@ -161,24 +163,14 @@
             const result = await response.json();
 
             if (!response.ok) {
-                // Si la respuesta no es OK, extrae el mensaje de error del detalle
                 const errorDetail = JSON.parse(result.detail);
                 throw new Error(errorDetail.message || 'Error desconocido del servidor.');
             }
 
-            alert(`Venta registrada con éxito! ID de Venta: ${result.venta_id}, Total: $${result.total_calculado}`);
+            alert(`Venta registrada con éxito! ID: ${result.venta_id}, Total: $${result.total_calculado}`);
             closeModal();
         } catch (error) {
             alert(`Error al registrar la venta: ${error.message}`);
-        }
-    });
-
-    // --- 5. INICIALIZACIÓN ---
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-        if (session) {
-            showDashboard(session);
-        } else {
-            showLoginView();
         }
     });
 </script>
