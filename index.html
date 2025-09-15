@@ -177,10 +177,12 @@
             </tr>`).join('') || `<tr><td colspan="4" class="p-4 text-center">No hay ventas.</td></tr>`;
     }
 
-    function showSaleForm() {
-        const { medicamentos, clientes } = appState;
+async function showSaleForm() {
+    try {
+        const [medicamentos, clientes] = await Promise.all([apiFetch('/medicamentos'), apiFetch('/clientes')]);
+        
         if (medicamentos.length === 0) {
-            alert("No hay medicamentos cargados para vender.");
+            alert("No hay medicamentos cargados para vender. Por favor, añade un lote primero.");
             return;
         }
 
@@ -190,8 +192,9 @@
         const formHtml = `
             <select name="clienteId" class="w-full p-2 border rounded"><option value="">Público General</option>${clientOptions}</select>
             <div id="ventaItems" class="space-y-2 mt-4"></div>
-            <button type="button" id="addItemBtn" class="bg-gray-200 p-2 rounded">➕ Añadir Producto</button>
-            <button type="submit" class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-4">Registrar Venta</button>`;
+            <button type="button" id="addItemBtn" class="bg-gray-200 p-2 rounded mt-2">➕ Añadir Producto</button>
+            <button type="submit" class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg mt-4">Registrar Venta</button>
+        `;
 
         const onSubmit = async (e) => {
             const ventaData = {
@@ -205,25 +208,60 @@
             try {
                 await apiFetch('/ventas', { method: 'POST', body: JSON.stringify(ventaData) });
                 closeModal();
-                // Volver a cargar los datos de ventas y lotes
-                appState.ventas = await apiFetch('/ventas');
-                appState.lotes = await apiFetch('/lotes');
-                renderSalesTable();
-                renderLotesTable();
+                renderVentas();
+                renderLotes();
             } catch (error) { alert(`Error al registrar venta: ${error.message}`); }
         };
 
         showFormModal("Registrar Nueva Venta", formHtml, onSubmit);
-        
-        // Lógica para el formulario dinámico
-        const itemsContainer = document.getElementById('ventaItems');
-        const addItem = () => { /* ... (código sin cambios) */ };
-        addItem();
-        document.getElementById('addItemBtn').addEventListener('click', addItem);
-        itemsContainer.addEventListener('click', e => { /* ... (código sin cambios) */ });
-        itemsContainer.addEventListener('change', e => { /* ... (código sin cambios) */ });
-    }
 
+        // --- CORRECCIÓN: Mover los event listeners aquí ---
+        // Ahora que el modal y su contenido existen, podemos encontrar los botones.
+        const itemsContainer = document.getElementById('ventaItems');
+        const addItemBtn = document.getElementById('addItemBtn');
+
+        const addItem = () => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'venta-item flex gap-2 items-center mt-2';
+            itemDiv.innerHTML = `
+                <select class="item-medicamento-id flex-grow p-2 border rounded">${medOptions}</select>
+                <input type="number" class="item-cantidad w-20 p-2 border rounded" placeholder="Cant." min="1" value="1" required>
+                <input type="text" class="item-precio w-24 p-2 border rounded bg-gray-100" placeholder="Precio" readonly>
+                <button type="button" class="removeItemBtn text-red-500">✖️</button>
+            `;
+            itemsContainer.appendChild(itemDiv);
+            
+            // Auto-seleccionar precio para el nuevo item
+            const newSelect = itemDiv.querySelector('.item-medicamento-id');
+            const priceInput = itemDiv.querySelector('.item-precio');
+            if (newSelect.options.length > 0) {
+                priceInput.value = newSelect.options[newSelect.selectedIndex].dataset.precio || '0.00';
+            }
+        };
+        
+        addItem(); // Añadir el primer item
+        
+        // Asignar los listeners después de que los elementos existen
+        addItemBtn.addEventListener('click', addItem);
+        
+        itemsContainer.addEventListener('click', e => {
+            if (e.target.classList.contains('removeItemBtn')) {
+                e.target.closest('.venta-item').remove();
+            }
+        });
+
+        itemsContainer.addEventListener('change', e => {
+            if (e.target.classList.contains('item-medicamento-id')) {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                const precioInput = e.target.closest('.venta-item').querySelector('.item-precio');
+                precioInput.value = selectedOption.dataset.precio || '0.00';
+            }
+        });
+
+    } catch(error) { 
+        alert(`Error al preparar formulario: ${error.message}`); 
+    }
+}
     // ============================================================================
     // 🔹 INICIALIZACIÓN
     // ============================================================================
