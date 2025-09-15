@@ -137,10 +137,10 @@
         const formData = new FormData(saleForm);
         const clienteId = formData.get('clienteId');
         
-        const items = Array.from(document.querySelectorAll('.sale-item')).map(itemDiv => {
-    const idInput = itemDiv.querySelector('[name="medicamentoId"]');
-    const cantidadInput = itemDiv.querySelector('[name="cantidad"]');
-
+const items = Array.from(document.querySelectorAll('.sale-item')).map(div => ({
+    medicamento_id: parseInt(div.querySelector('[name="medicamentoId"]').value), // <-- La corrección clave
+    cantidad: parseInt(div.querySelector('[name="cantidad"]').value)
+}));
     // --- LÍNEAS DE DEPURACIÓN ---
     // Vamos a ver qué encuentra el código y qué valor lee.
     console.log("Div del item:", itemDiv);
