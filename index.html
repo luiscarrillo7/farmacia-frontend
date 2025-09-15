@@ -6,6 +6,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <title>Prueba de Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
@@ -24,8 +27,10 @@
     // ⚠️ Reemplaza con tus propias credenciales de Supabase
     const SUPABASE_URL = 'https://ccfgclymyeciqbgrdfuf.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZmdjbHlteWVjaXFiZ3JkZnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4NTcwODQsImV4cCI6MjA3MjQzMzA4NH0.hN5kiIxFa4FAzsI4UWJGcKQyTTu30dk6M6ybN-PQ2GM';
+const API_URL = 'https://farmacia-269414280318.europe-west1.run.app';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // CORRECCIÓN: Usar 'supabaseClient' para evitar el conflicto de nombres
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // --- ELEMENTOS DEL DOM ---
     const loginForm = document.getElementById('loginForm');
@@ -35,27 +40,28 @@
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Limpiar mensaje anterior
-        messageDiv.textContent = '';
-        messageDiv.className = 'text-center font-bold mt-4';
+        messageDiv.textContent = 'Procesando...';
+        messageDiv.className = 'text-center font-bold mt-4 text-gray-500';
 
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
         // Intentar iniciar sesión con Supabase
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: password,
         });
 
         if (error) {
             // Si hay un error, mostrarlo en rojo
-            messageDiv.textContent = `Error en Login: ${error.message}`;
+            messageDiv.textContent = `Error: ${error.message}`;
+            messageDiv.classList.remove('text-gray-500');
             messageDiv.classList.add('text-red-500');
             console.error(error);
         } else {
             // Si el login es exitoso, mostrar mensaje de éxito en verde
             messageDiv.textContent = '✅ ¡Login Exitoso!';
+            messageDiv.classList.remove('text-gray-500');
             messageDiv.classList.add('text-green-500');
             console.log(data);
         }
