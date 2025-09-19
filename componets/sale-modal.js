@@ -1,6 +1,4 @@
-import { LitElement, html, css } from 'lit';
-
-export class SaleModal extends LitElement {
+export class SaleModal extends window.LitElement {
   static properties = {
     isOpen: { type: Boolean },
     medicamentos: { type: Array },
@@ -9,7 +7,7 @@ export class SaleModal extends LitElement {
     apiUrl: { type: String }
   };
 
-  static styles = css`
+  static styles = window.css`
     .modal-backdrop {
       background-color: rgba(0, 0, 0, 0.5);
     }
@@ -87,7 +85,7 @@ export class SaleModal extends LitElement {
   render() {
     if (!this.isOpen) return html``;
 
-    return html`
+    return window.html`
       <div class="modal-backdrop fixed inset-0 flex items-center justify-center p-4" 
            @click="${this._handleBackdropClick}">
         <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl w-full" 
@@ -108,10 +106,10 @@ export class SaleModal extends LitElement {
 
   _renderForm() {
     const clientOptions = this.clientes.map(c => 
-      html`<option value="${c.id}">${c.nombre} ${c.apellido}</option>`
+      window.html`<option value="${c.id}">${c.nombre} ${c.apellido}</option>`
     );
 
-    return html`
+    return window.html`
       <form @submit="${this._handleSubmit}" class="space-y-4">
         <select name="clienteId" class="w-full">
           <option value="">Público General</option>
@@ -149,7 +147,7 @@ export class SaleModal extends LitElement {
 
   _renderSaleItem(item, index) {
     const medOptions = this.medicamentos.map(m => 
-      html`<option value="${m.id}" 
+      window.html`<option value="${m.id}" 
                    data-precio="${m.precio_venta}"
                    ?selected="${item.medicamento_id === m.id}">
              ${m.nombre} (${m.presentacion})
@@ -160,7 +158,7 @@ export class SaleModal extends LitElement {
     const unitPrice = selectedMed ? selectedMed.precio_venta : 0;
     const subtotal = item.cantidad * unitPrice;
 
-    return html`
+    return window.html`
       <div class="sale-item">
         <select @change="${(e) => this._updateItemMedicamento(index, e)}" 
                 data-index="${index}">
